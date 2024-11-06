@@ -5,3 +5,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 document.querySelector('.back-button').addEventListener('click', function() {
     window.location.href = 'index.html';
 }); 
+
+document.querySelector('#puppet-selector').addEventListener('click', function() {
+    window.location.href = 'puppet.html';
+});
