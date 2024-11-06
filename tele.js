@@ -25,8 +25,16 @@ function expandable() {
 
 function getTelegramUser() {
     if (tg.initData) {
-        console.log(tg.initData);
-        return tg.initData;
+        const params = new URLSearchParams(tg.initData);
+        const userData = params.get('user');
+        if (userData) {
+            const userObj = JSON.parse(userData);
+            if (userObj.first_name) {
+                return userObj.first_name;
+            }
+        }
+        console.warn("First name is unavailable in initData.");
+        return "Unknown User";
     } else {
         console.warn("User information is incomplete or unavailable.");
         return "Unknown User";
