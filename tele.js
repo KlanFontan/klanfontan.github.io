@@ -24,8 +24,8 @@ function expandable() {
 }
 
 function getTelegramUser() {
-    if (tg.initDataUnsafe.user) {
-        return tg.initDataUnsafe.user.first_name;
+    if (tg.initData) {
+        return tg.initData["user"]["first_name"];
     } else {
         console.warn("User information is incomplete or unavailable.");
         return "Unknown User";
