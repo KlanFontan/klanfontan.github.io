@@ -10,6 +10,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Opera and Edge */
   }
   
   h1 {
@@ -26,11 +30,21 @@ body {
   canvas {
     border: 1px solid #000;
     background-color: #e5e5e5;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: -webkit-crisp-edges;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    -ms-interpolation-mode: nearest-neighbor;
     width: 850px;
     height: 350px;
+  }
+  
+  #gameCanvas {
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Fortnite';
+    display: block;
+    touch-action: none;
+  }
+
+  @font-face {
+    font-family: 'Fortnite';
+    src: url('frt.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
   }

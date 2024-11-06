@@ -2,10 +2,6 @@
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d', { alpha: false }); // Отключаем прозрачность
-ctx.imageSmoothingEnabled = false;
-ctx.webkitImageSmoothingEnabled = false;
-ctx.mozImageSmoothingEnabled = false;
-ctx.msImageSmoothingEnabled = false;
 
 // Размеры холста
 canvas.width = 850;
@@ -42,7 +38,6 @@ let isMousePressed = false;
 
 // Параметры силы броска
 let throwPower = 0;
-let isCharging = false;
 const maxPower = 8; // Настроили максимальную силу
 
 // Добавляем объект препятствия
@@ -81,9 +76,12 @@ const backButton = {
     height: 45 // Предполагаемая высота кнопки
 };
 
+// Добавляем загрузку изображения для "versus"
+const versusImage = new Image();
+versusImage.src = 'klanfontan.github.io-main/img';
+
 // Добавляем функцию отрисовки фона
 function drawBackground() {
-    ctx.imageSmoothingEnabled = false; // Убеждаемся, что сглаживание отключено
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 }
 
@@ -111,12 +109,12 @@ function drawPlayer(player) {
 function drawHealthBars() {
     // Размеры HP бара
     const barWidth = 300;  // Оставляем прежнюю длину
-    const barHeight = 15;  // Уменьшаем высоту с 20 до 15
-    const topOffset = 20;
-    const radius = 7;      // Уменьшаем радиус закругления с 10 до 7
+    const barHeight = 10;  // Уменьшаем высоту с 15 до 7.5
+    const topOffset = 30;
+    const radius = 6;      // Уменьшаем радиус закругления с 7 до 3.5
     
     // HP бар для player1 (слева)
-    // Рисуем фоновый бар (пустой)
+    // Рисуем фоновый бар (пусто)
     ctx.fillStyle = "white";
     roundRect(
         50,
@@ -191,7 +189,7 @@ function drawStone() {
 // Обновляем функцию рисования индикатора силы броска
 function drawPowerMeter() {
     const outerRadius = 80; // Увеличенный внешний радиус дуги на 5%
-    const innerRadius = 60; // Увеличенный внутренний радиус дуги на 5%
+    const innerRadius = 60; // Увеличнный внутренний радиус дуги на 5%
 
     // Определяем параметры для текущего игрока
     let centerX, centerY, startAngle, endAngle;
@@ -239,15 +237,13 @@ function switchPlayer() {
 // Обновляем обработчик нажатия мыши для первого игрока
 canvas.addEventListener('mousedown', (e) => {
     if (!canThrow || stone || currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
-    
     isMousePressed = true;
     isCharging = true;
 });
 
 // Обновляем обработчик броска для первого игрока
 canvas.addEventListener('mouseup', (e) => {
-    if (!isMousePressed || !canThrow || currentPlayer !== 1) return;
-    
+    if (!isMousePressed || !canThrow || currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
     isMousePressed = false;
     isCharging = false;
     performThrow();
@@ -257,7 +253,7 @@ canvas.addEventListener('mouseup', (e) => {
 function performThrow() {
     if (currentPlayer === 1) {
         stone = {
-            x: player1.x, // Левая сторона игрока
+            x: player1.x, // Левая сторона игока
             y: player1.y + player1.height / 2, // Примерная высота руки
             speedX: (stoneSpeed + throwPower) * 0.8,
             speedY: -(stoneSpeed + throwPower) * 1.2,
@@ -279,7 +275,7 @@ function performThrow() {
 function autoThrowForPlayer2() {
     if (currentPlayer === 2 && canThrow) {
         isCharging = true;
-        const randomTime = Math.random() * 400 + 300; // Случайное время от 500 до 2500 мс
+        const randomTime = Math.random() * 800 + 400; // Случайное время от 500 до 2500 мс
         setTimeout(() => {
             isCharging = false;
             performThrow();
@@ -338,7 +334,7 @@ function updateGame() {
     
     requestAnimationFrame(updateGame);
 }
-// Обновляем функцию проверки столкновений
+// Обновляем функцию поверки столкновений
 function checkCollision() {
     if (stone) {
         // Проверяем, находится ли камень внутри общей области баррикады
@@ -367,11 +363,11 @@ function checkCollision() {
         let closestX = Math.max(targetPlayer.x, Math.min(stone.x, targetPlayer.x + targetPlayer.width));
         let closestY = Math.max(targetPlayer.y, Math.min(stone.y, targetPlayer.y + targetPlayer.height));
         
-        // Вычисляем расстояние между центром камня и ближайшей точкой прямоугольника игрока
+        // Вычисляем расстояние между центром камня и ближайшей точкой прямоуголника игрока
         let distance = Math.sqrt((stone.x - closestX) ** 2 + (stone.y - closestY) ** 2);
         
         if (distance <= stoneRadius) {
-            targetPlayer.hp -= 100;
+            targetPlayer.hp -= 15;
             if (targetPlayer.hp < 0) targetPlayer.hp = 0;
             stone = null;
             switchPlayer();
@@ -386,21 +382,20 @@ function checkCollision() {
 }
 
 function displayWinner(winner) {
-    // Рисуем полупрозрачный чёрный фон
-    ctx.fillStyle = "rgba(0, 0, 0, 0.7)"; // Прозрачный чёрный цвет
+    const backgroundColor = winner === 'Puppet' ? "#E82C40" : "#89DF6F";
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполняем фон
 
     // Рисуем текст поверх
     ctx.fillStyle = "white"; // Цвет текста
-    ctx.font = "48px Arial"; // Шрифт и размер текста
+    ctx.font = "48px Fortnite"; // Шрифт и размер текста
     ctx.textAlign = "center"; // Выравнивание текста
     ctx.textBaseline = "middle"; // Базовая линия текста
-    ctx.fillText(`Игра окончена! Победил ${winner}.`, canvas.width / 2, canvas.height / 2); // Текст
+    ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2); // Текст
 
     // Рисуем кнопку
     ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
 }
-
 // Вспомогательная функция для роверки попадания точки в треугольник
 function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
     let area = Math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1))/2;
@@ -422,7 +417,7 @@ function resetGame() {
     updateGame(); // Немедленно перезапускаем игру
 }
 
-// Ждем загрузки всех изображений перед началом игры
+// Ждем загрузки всех изображений перед начало игры
 Promise.all([
     new Promise(resolve => backgroundImage.onload = resolve),
     new Promise(resolve => emptyHpBarImage.onload = resolve),
@@ -445,5 +440,77 @@ canvas.addEventListener('click', (e) => {
             resetGame();
         }
     }
+});
+
+let chargeLevel = 0; // Уровень зарядки броска
+const maxCharge = 100; // Максимальный уровень зарядки
+let isCharging = false; // Флаг зарядки
+
+// Функция для начала зарядки
+function startCharging() {
+    if (!canThrow || stone || currentPlayer !== 1) return;
+    isCharging = true;
+    chargeLevel = 0; // Сбрасываем уровень зарядки
+}
+
+// Функция для завершения зарядки и выполнения броска
+function endCharging() {
+    if (isCharging) {
+        isCharging = false;
+        performThrow(); // Выполняем бросок
+        chargeLevel = 0; // Сбрасываем уровень зарядки после броска
+    }
+}
+
+// Обработчики для сенсорных устройств
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault(); // Предотвращаем действия по умолчанию
+    if (currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
+    startCharging();
+});
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault(); // Предотвращаем действия по умолчанию
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.changedTouches[0];
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
+
+    // Проверяем, если игра завершена и нажата кнопка "Назад"
+    if (gameOver) {
+        if (touchX >= backButton.x && touchX <= backButton.x + backButton.width &&
+            touchY >= backButton.y && touchY <= backButton.y + backButton.height) {
+            // Действие при нажатии на кнопку
+            window.location.href = '../../../index.html';  
+            return;
+        }
+    }
+
+    if (currentPlayer === 1) {
+        endCharging();
+    }
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault(); // Предотвращаем действия по умолчанию
+    if (currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
+    endCharging();
+    // Если нужно, добавьте логику для обработки перемещения
+});
+
+// Загружаем шрифт с помощью FontFace API
+const fortniteFont = new FontFace('Fortnite', 'url(frt.otf)');
+
+fortniteFont.load().then(function(loadedFont) {
+    // Добавляем шрифт в документ
+    document.fonts.add(loadedFont);
+
+    // Теперь шрифт загружен, можно использовать его в канвасе
+    ctx.font = "48px Fortnite";
+    // Вызовите функцию, которая рисует текст
+    displayWinner('Puppet'); // Пример вызова
+}).catch(function(error) {
+    console.error('Ошибка загрузки шрифта:', error);
 });
 
