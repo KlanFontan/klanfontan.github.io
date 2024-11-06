@@ -495,8 +495,6 @@ canvas.addEventListener('touchend', (e) => {
 canvas.addEventListener('touchmove', (e) => {
     e.preventDefault(); // Предотвращаем действия по умолчанию
     if (currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
-    endCharging();
-    // Если нужно, добавьте логику для обработки перемещения
 });
 
 // Загружаем шрифт с помощью FontFace API
