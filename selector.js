@@ -9,3 +9,7 @@ document.querySelector('.back-button').addEventListener('click', function() {
 document.querySelector('#puppet-selector').addEventListener('click', function() {
     window.location.href = 'puppet.html';
 });
+
+document.querySelector('#gizmo-selector').addEventListener('click', function() {
+    window.location.href = 'gizmo.html';
+});

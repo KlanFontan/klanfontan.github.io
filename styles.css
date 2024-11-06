@@ -286,7 +286,8 @@ body {
     align-items: center;
     height: 100%;
     width: 100%;
-    padding: 0 15vw;
+    padding: 0 5vw 0 15vw;
+    gap: 5rem;
 }
 
 .player-text {
@@ -326,3 +327,175 @@ body {
     color: #000000;
     opacity: 0.25;
 }
+
+.puppet-body {
+    background-color: #E82C40;
+}
+
+.enemy-selector h4.player-text {
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: fadeIn 1s forwards 0.3s;
+}
+
+.enemy-selector img {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: floatUp 1s forwards 0.5s;
+}
+
+.enemy-selector h3 {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: floatUp 1s forwards 0.7s;
+}
+
+.player-description {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: floatUpDescription 1s forwards 0.9s;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floatUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes floatUpDescription {
+    to {
+        opacity: 0.25;
+        transform: translateY(0);
+    }
+}
+
+.victims-container {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.victims-container h2 {
+    font-size: 3rem;
+    margin: 0 0 1rem 0;
+    background: linear-gradient(#F3F303 00%, #FB0101 25%, #000000 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: .75px white;
+    animation: slideUpFadeIn 1s ease-out forwards;
+}
+
+.victim-selector {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.victim-selector-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeInScale 0.5s ease-out forwards;
+    animation-delay: calc(0.5s + var(--animation-delay));
+}
+
+.victim-selector-item-image {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    background-image: url('img/square_gizmo.png');
+    background-size: cover;
+    background-position: center;
+    width: 20vh;
+    height: 20vh;
+    margin-top: 0.25rem;
+}
+
+.victim-placement {
+    font-size: .75rem;
+    margin: 0 0 0.25rem 0;
+    color: #ffffff;
+    width: 100%;
+    text-align: center;
+    background-color: #941320;
+    border-radius: 10px;
+    box-shadow: 0px 1px 0px #640D0D, 0px 2px 0px #640D0D;
+}
+
+.victim-selector-item h3 {
+    font-size: 1rem;
+    margin: 0;
+    color: #ffffff;
+    text-shadow: 
+            0px 1px 0px #640D0D,
+            0px 2px 0px #640D0D,
+            0px 3px 0px #640D0D;
+}
+
+.victim-description {
+    font-size: 1rem;
+    margin: 0.5rem 0 0 0;
+    color: #000000;
+    opacity: 0.25;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes textFadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes slideUpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.victim-selector-item-image-gizmo {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    width: 20vh;
+    height: 20vh;
+    margin-top: 0.25rem;
+    background-image: url('img/square_puppet.png');
+}
+
+.gizmo-body {
+    background-color: #89DF6F;
+}
+
