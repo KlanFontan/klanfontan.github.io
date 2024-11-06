@@ -5,3 +5,7 @@ if (!/Mobi|Android/i.test(navigator.userAgent)) {
 document.querySelector('.back-button').addEventListener('click', function() {
     window.location.href = 'selector.html';
 }); 
+
+document.querySelector('.victim-selector-item').addEventListener('click', function() {
+    window.location.href = 'game/Puppet-main/gamecode/index.html';
+});
