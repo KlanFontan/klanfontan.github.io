@@ -23,7 +23,7 @@ function expandable() {
 }
 
 function getTelegramUser() {
-    return tg.initDataUnsafe.user.username;
+    return tg.user.first_name + " " + tg.user.last_name;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
