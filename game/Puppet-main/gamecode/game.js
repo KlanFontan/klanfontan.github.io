@@ -38,7 +38,7 @@ let isMousePressed = false;
 
 // Параметры силы броска
 let throwPower = 0;
-const maxPower = 8; // Настроили максимальную силу
+const maxPower = 8; // Настроили макимальную силу
 
 // Добавляем объект препятствия
 const obstacle = {
@@ -189,7 +189,7 @@ function drawStone() {
 // Обновляем функцию рисования индикатора силы броска
 function drawPowerMeter() {
     const outerRadius = 80; // Увеличенный внешний радиус дуги на 5%
-    const innerRadius = 60; // Увеличнный внутренний радиус дуги на 5%
+    const innerRadius = 60; // Увеличнй внутренний радиус дуги на 5%
 
     // Определяем параметры для текущего игрока
     let centerX, centerY, startAngle, endAngle;
@@ -334,7 +334,7 @@ function updateGame() {
     
     requestAnimationFrame(updateGame);
 }
-// Обновляем функцию поверки столкновений
+// Обновляем функцию повер столкновений
 function checkCollision() {
     if (stone) {
         // Проверяем, находится ли камень внутри общей области баррикады
@@ -464,37 +464,51 @@ function endCharging() {
 
 // Обработчики для сенсорных устройств
 canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Предотвращаем действия по умолчанию
-    if (currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
-    startCharging();
+    const touch = e.changedTouches[0];
+    const touchX = touch.clientX;
+    const touchY = touch.clientY;
+
+    // Проверяем, что касание происходит в пределах кнопки "Назад"
+    if (isTouchWithinBackButton(touchX, touchY)) {
+        // Действие при нажатии на кнопку "Назад"
+        window.location.href = '../../../index.html';
+        return;
+    }
+
+    // Проверяем, что касание происходит в пределах игрового поля
+    if (isTouchWithinGameArea(touchX, touchY)) {
+        e.preventDefault();
+        if (currentPlayer !== 1) return;
+        startCharging();
+    }
 });
 
 canvas.addEventListener('touchend', (e) => {
-    e.preventDefault(); // Предотвращаем действия по умолчанию
-
-    const rect = canvas.getBoundingClientRect();
     const touch = e.changedTouches[0];
-    const touchX = touch.clientX - rect.left;
-    const touchY = touch.clientY - rect.top;
+    const touchX = touch.clientX;
+    const touchY = touch.clientY;
 
-    // Проверяем, если игра завершена и нажата кнопка "Назад"
-    if (gameOver) {
-        if (touchX >= backButton.x && touchX <= backButton.x + backButton.width &&
-            touchY >= backButton.y && touchY <= backButton.y + backButton.height) {
-            // Действие при нажатии на кнопку
-            window.location.href = '../../../index.html';  
-            return;
-        }
-    }
-
-    if (currentPlayer === 1) {
+    // Проверяем, что касание происходит в пределах игрового поля
+    if (isTouchWithinGameArea(touchX, touchY)) {
+        e.preventDefault();
+        if (currentPlayer !== 1) return;
         endCharging();
     }
 });
 
+function isTouchWithinBackButton(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    return x >= backButton.x && x <= backButton.x + backButton.width &&
+           y >= backButton.y && y <= backButton.y + backButton.height;
+}
+
+function isTouchWithinGameArea(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
 canvas.addEventListener('touchmove', (e) => {
     e.preventDefault(); // Предотвращаем действия по умолчанию
-    if (currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
 });
 
 // Загружаем шрифт с помощью FontFace API
