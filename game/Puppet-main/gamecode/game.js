@@ -98,6 +98,8 @@ puppetAvatarImage.src = '../../../img/square_puppet.png';
 if (tele.initData) {
     const params = new URLSearchParams(tele.initData);
     const userData = params.get('user');
+    console.log(tele.initData);
+    console.log(userData);
     if (userData) {
         const userObj = JSON.parse(userData);
         if (userObj.first_name) {
