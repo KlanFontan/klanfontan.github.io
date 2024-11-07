@@ -1,27 +1,35 @@
 // game.js
 
+let tele = window.Telegram.WebApp;
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d', { alpha: false }); // Отключаем прозрачность
 
+tele.ready();
+
+tele.expand();
+tele.setHeaderColor("#000000");
+tele.setBackgroundColor("#000000");
+
 // Размеры холста
-canvas.width = 850;
-canvas.height = 300;
+canvas.width = 850*1.5;
+canvas.height = 300*1.5;
 
 // Персонажи
 const player1 = { 
-    x: 40,
-    y: canvas.height - 200,
-    width: 136,
-    height: 176,
+    x: 85,
+    y: canvas.height - 250,
+    width: 156,
+    height: 216,
     hp: 100,
     maxHp: 100 
 };
 
 const player2 = { 
-    x: canvas.width - 186,
-    y: canvas.height - 200,
-    width: 136,
-    height: 176,
+    x: canvas.width - 250,
+    y: canvas.height - 250,
+    width: 156,
+    height: 216,
     hp: 100,
     maxHp: 100 
 };
@@ -32,8 +40,8 @@ let canThrow = true;  // Можно ли сейчас бросать
 
 // Изменяем параметры камня
 let stone = null;
-let stoneSpeed = 0.45; // Уменьшили базовую скорость
-let gravity = 0.17; // Немного увеличили гравитацию с 0.12 до 0.15
+let stoneSpeed = 3.20; // Уменьшили базовую скорость
+let gravity = 0.17; // Немного увеличили гавитацию с 0.12 до 0.15
 let isMousePressed = false;
 
 // Параметры силы броска
@@ -42,10 +50,10 @@ const maxPower = 8; // Настроили макимальную силу
 
 // Добавляем объект препятствия
 const obstacle = {
-    x: 362, // Центр по X (850/2 - 25)
-    y: 210, // Позиция по Y, уменьшена на 10 пикселей
-    width: 125,
-    height: 120,
+    x: 362*1.5, // Центр по X (850/2 - 25)
+    y: 210*1.5, // Позиция по Y, уменьшена на 10 пикселей
+    width: 125*1.5,
+    height: 120*1.5,
     color: "#666666" // Серый цвет
 };
 
@@ -78,7 +86,32 @@ const backButton = {
 
 // Добавляем загрузку изображения для "versus"
 const versusImage = new Image();
-versusImage.src = 'klanfontan.github.io-main/img';
+versusImage.src = '../../../img/versus.svg';
+
+// Добавляем загрузку изображений аватаров
+const gizmoAvatarImage = new Image();
+gizmoAvatarImage.src = '../../../img/square_gizmo.png';
+
+const puppetAvatarImage = new Image();
+puppetAvatarImage.src = '../../../img/square_puppet.png';
+
+if (tele.initData) {
+    const params = new URLSearchParams(tele.initData);
+    const userData = params.get('user');
+    if (userData) {
+        const userObj = JSON.parse(userData);
+        if (userObj.first_name) {
+           var player1Name = userObj.first_name;
+        }
+    }
+    console.warn("First name is unavailable in initData.");
+    var player1Name = "Puppet";
+} else {
+    console.warn("User information is incomplete or unavailable.");
+    var player1Name = "Puppet";
+}
+
+const player2Name = "Gizmo";
 
 // Добавляем функцию отрисовки фона
 function drawBackground() {
@@ -105,14 +138,40 @@ function drawPlayer(player) {
     }
 }
 
-// Функция отрисовки HP баров
+// Функция отрисовки HP баров и никнеймов
 function drawHealthBars() {
     // Размеры HP бара
-    const barWidth = 300;  // Оставляем прежнюю длину
-    const barHeight = 10;  // Уменьшаем высоту с 15 до 7.5
-    const topOffset = 30;
+    const barWidth = 450;  // Оставляем прежнюю длину
+    const barHeight = 12;  // Уменьшаем высоту с 15 до 7.5
+    const topOffset = 70;
     const radius = 6;      // Уменьшаем радиус закругления с 7 до 3.5
     
+    // Отрисовка никнейма для player1
+    ctx.fillStyle = "white";
+    ctx.font = "28px Fortnite";
+    ctx.textAlign = "right";
+    ctx.shadowColor = "rgba(100, 13, 13, 1)";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4;
+    ctx.fillText(player1Name, 460, topOffset - 25);
+    ctx.shadowOffsetX = 0; // Сброс тени
+    ctx.shadowOffsetY = 0; // Сброс тени
+
+    // Отрисовка плашки для player1
+    ctx.fillStyle = "rgba(232, 44, 64, 1)";
+    const player1BoxWidth = 70;
+    const player1BoxX = canvas.width / 2 - ctx.measureText(player1Name).width - 260;
+    roundRect(player1BoxX, topOffset - 41, player1BoxWidth, 30, 5); // Позиция и размер плашки с закруглением 5 пикселей
+    ctx.fillStyle = "white";
+    ctx.font = "18px Fortnite";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 3;
+    ctx.fillText("PUPPET", player1BoxX + player1BoxWidth / 2, topOffset - 24); // Текст в плашке
+    ctx.shadowOffsetX = 0; // Сброс тени
+    ctx.shadowOffsetY = 0; // Сброс тени
+
     // HP бар для player1 (слева)
     // Рисуем фоновый бар (пусто)
     ctx.fillStyle = "white";
@@ -136,6 +195,33 @@ function drawHealthBars() {
         );
     }
     
+    // Отрисовка никнейма для player2
+    ctx.fillStyle = "white";
+    ctx.font = "28px Fortnite";
+    ctx.textAlign = "left";
+    ctx.shadowColor = "rgba(100, 13, 13, 1)";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 4;
+    ctx.fillText(player2Name, canvas.width - 460, topOffset - 25);
+    ctx.shadowOffsetX = 0; // Сброс тени
+    ctx.shadowOffsetY = 0; // Сброс тени
+
+    // Отрисовка плашки для player2
+    ctx.fillStyle = "rgba(137, 223, 111, 1)";
+    const player2NameWidth = ctx.measureText(player2Name).width;
+    const player2BoxX = canvas.width / 2 + player2NameWidth + 190;
+    const player2BoxWidth = 70;
+    roundRect(player2BoxX, topOffset - 41, player2BoxWidth, 30, 5); // Позиция и размер плашки с закруглением 5 пикселей
+    ctx.fillStyle = "white";
+    ctx.font = "18px Fortnite";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.1)";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 3;
+    ctx.fillText("GIZMO", player2BoxX + player2BoxWidth / 2, topOffset - 24); // Текст в плашке
+    ctx.shadowOffsetX = 0; // Сброс тени
+    ctx.shadowOffsetY = 0; // Сброс тени
+
     // HP бар для player2 (справа)
     // Рисуем фоновый бар (пустой)
     ctx.fillStyle = "white";
@@ -188,8 +274,8 @@ function drawStone() {
 
 // Обновляем функцию рисования индикатора силы броска
 function drawPowerMeter() {
-    const outerRadius = 80; // Увеличенный внешний радиус дуги на 5%
-    const innerRadius = 60; // Увеличнй внутренний радиус дуги на 5%
+    const outerRadius = 140; // Увеличенный внешний радиус дуги на 5%
+    const innerRadius = 110; // Увеличнй внутренний радиус дуги на 5%
 
     // Определяем параметры для текущего игрока
     let centerX, centerY, startAngle, endAngle;
@@ -298,7 +384,7 @@ function updateStone() {
     }
 }
 
-let gameOver = false; // Флаг для проверки завершения игры
+let gameOver = false; // Флаг для проверки авершения игры
 
 // Функция обновления игры
 function updateGame() {
@@ -331,6 +417,12 @@ function updateGame() {
     drawHealthBars();
     drawStone();
     if (canThrow) drawPowerMeter();
+    
+    // Добавляем отрисовку изображения "versus"
+    drawVersus();
+    
+    // Добавляем отрисовку аватаров
+    drawAvatars();
     
     requestAnimationFrame(updateGame);
 }
@@ -417,14 +509,34 @@ function resetGame() {
     updateGame(); // Немедленно перезапускаем игру
 }
 
-// Ждем загрузки всех изображений перед начало игры
+let countdown = 3; // Начальное значение отсчета
+
+function showCountdown() {
+    ctx.fillStyle = "rgba(232, 44, 64, 1)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Заливаем фон красным
+
+    ctx.fillStyle = "white";
+    ctx.font = "100px Fortnite"; // Устанавливаем шрифт и размер
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(countdown, canvas.width / 2, canvas.height / 2); // Рисуем цифру
+
+    if (countdown > 1) {
+        countdown--;
+        setTimeout(showCountdown, 1000); // Уменьшаем отсчет каждую секунду
+    } else {
+        setTimeout(updateGame, 1000); // Начинаем игру через секунду после "1"
+    }
+}
+
+// Ждем загрузки всех изображений перед началом игры
 Promise.all([
     new Promise(resolve => backgroundImage.onload = resolve),
     new Promise(resolve => emptyHpBarImage.onload = resolve),
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
-    updateGame();
+    showCountdown(); // Запускаем отсчет
 });
 
 // Обработчик нажатия на кнопку
@@ -511,7 +623,7 @@ canvas.addEventListener('touchmove', (e) => {
     e.preventDefault(); // Предотвращаем действия по умолчанию
 });
 
-// Загружаем шрифт с помощью FontFace API
+// Загружаем шрит с помощью FontFace API
 const fortniteFont = new FontFace('Fortnite', 'url(frt.otf)');
 
 fortniteFont.load().then(function(loadedFont) {
@@ -520,9 +632,42 @@ fortniteFont.load().then(function(loadedFont) {
 
     // Теперь шрифт загружен, можно использовать его в канвасе
     ctx.font = "48px Fortnite";
-    // Вызовите функцию, которая рисует текст
-    displayWinner('Puppet'); // Пример вызова
 }).catch(function(error) {
     console.error('Ошибка загрузки шрифта:', error);
 });
+
+// Пер��менные для анимации пульсации
+let versusScale = 1;
+let scaleDirection = 1;
+const scaleSpeed = 0.0005; // Скорость изменения масштаба
+const maxScale = 1.05; // Максимальный масштаб
+const minScale = 0.95; // Минимальный масштаб
+
+// Обновляем функцию отрисовки изображения "versus" с анимацией
+function drawVersus() {
+    const versusWidth = 75 * versusScale; // Ширина изображения с учетом масштаба
+    const versusHeight = 63 * versusScale; // Высота изображения с учетом масштаба
+    const centerX = canvas.width / 2;
+    const centerY = versusHeight / 2 - 35;
+    
+    // Изменяем координаты отрисовки, чтобы пульсация происходила от центра
+    ctx.drawImage(versusImage, centerX - versusWidth / 2, centerY - versusHeight / 2 + 65, versusWidth, versusHeight);
+
+    // Обновляем масштаб для анимации пульсации
+    versusScale += scaleSpeed * scaleDirection;
+    if (versusScale > maxScale || versusScale < minScale) {
+        scaleDirection *= -1; // Меняем направление изменения масштаба
+    }
+}
+
+// Функция для отрисовки аватаров
+function drawAvatars() {
+    const avatarSize = 100; // Размер аватара
+    const gizmoX = canvas.width / 2 + avatarSize - 30; // Позиция для Gizmo
+    const puppetX = canvas.width / 2 - avatarSize - 65; // Позиция для Puppet
+    const avatarY = 10; // Общая позиция по Y
+
+    ctx.drawImage(gizmoAvatarImage, gizmoX, avatarY, avatarSize, avatarSize);
+    ctx.drawImage(puppetAvatarImage, puppetX, avatarY, avatarSize, avatarSize);
+}
 
