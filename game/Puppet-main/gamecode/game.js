@@ -104,10 +104,14 @@ if (tele.initData) {
         const userObj = JSON.parse(userData);
         if (userObj.first_name) {
            var player1Name = userObj.first_name;
+        } else {
+            console.warn("First name is unavailable in initData.");
+            var player1Name = "Puppet";
         }
+    } else {
+        console.warn("User information is incomplete or unavailable.");
+        var player1Name = "Puppet";
     }
-    console.warn("First name is unavailable in initData.");
-    var player1Name = "Puppet";
 } else {
     console.warn("User information is incomplete or unavailable.");
     var player1Name = "Puppet";
