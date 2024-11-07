@@ -79,7 +79,7 @@ backButtonImage.src = 'backButton.png';
 // Координаты и размеры кнопки
 const backButton = {
     x: 50,
-    y: 55, // Подняли кнопку выше, чтобы она не  с моделькой игрока
+    y: 55, // Подняли кнопку выше, чтобы она не  с моделькой игрка
     width: 125, // Предполагаемая ширина кнопки
     height: 45 // Предполагаемая высота кнопки
 };
@@ -119,6 +119,16 @@ if (tele.initData) {
 
 const player2Name = "Gizmo";
 
+// Добавляем переменные для анимации HP
+let displayedHp1 = player1.hp;
+let displayedHp2 = player2.hp;
+
+// Добавляем переменные для анимации мигания
+let player1Hit = false;
+let player2Hit = false;
+let hitAnimationDuration = 500; // Длительность анимации в миллисекундах
+let hitAnimationStartTime = 0;
+
 // Добавляем функцию отрисовки фона
 function drawBackground() {
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
@@ -127,21 +137,30 @@ function drawBackground() {
 // Функция рисования игрока
 function drawPlayer(player) {
     ctx.imageSmoothingEnabled = false; // Отключаем сглаживание для четкости
-    if (player === player1) {
-        ctx.drawImage(player1Image, 
-            player.x, 
-            player.y, 
-            player.width, 
-            player.height
-        );
+
+    // Проверяем, нужно ли мигание
+    let isHit = (player === player1 && player1Hit) || (player === player2 && player2Hit);
+    let elapsedTime = Date.now() - hitAnimationStartTime;
+
+    if (isHit && elapsedTime < hitAnimationDuration) {
+        // Меняем прозрачность, если прошло меньше половины времени анимации
+        ctx.globalAlpha = (Math.floor(elapsedTime / 100) % 2 === 0) ? 0.5 : 1.0;
     } else {
-        ctx.drawImage(player2Image, 
-            player.x, 
-            player.y, 
-            player.width, 
-            player.height
-        );
+        // Сбрасываем флаг мигания и прозрачность, если анимация завершена
+        if (player === player1) player1Hit = false;
+        if (player === player2) player2Hit = false;
+        ctx.globalAlpha = 1.0;
     }
+
+    // Отрисовываем изображение игрока
+    if (player === player1) {
+        ctx.drawImage(player1Image, player.x, player.y, player.width, player.height);
+    } else {
+        ctx.drawImage(player2Image, player.x, player.y, player.width, player.height);
+    }
+
+    // Восстанавливаем прозрачность для других элементов
+    ctx.globalAlpha = 1.0;
 }
 
 // Функция отрисовки HP баров и никнеймов
@@ -178,6 +197,12 @@ function drawHealthBars() {
     ctx.shadowOffsetX = 0; // Сброс тени
     ctx.shadowOffsetY = 0; // Сброс тени
 
+    // Анимируем HP для player1
+    if (displayedHp1 > player1.hp) {
+        displayedHp1 -= 0.5; // Скорость уменьшения HP
+        if (displayedHp1 < player1.hp) displayedHp1 = player1.hp;
+    }
+
     // HP бар для player1 (слева)
     // Рисуем фоновый бар (пусто)
     ctx.fillStyle = "white";
@@ -191,13 +216,13 @@ function drawHealthBars() {
     
     // Заполненная часть HP бара для player1
     ctx.fillStyle = "red";
-    if (player1.hp > 0) {
+    if (displayedHp1 > 0) {
         roundRect(
-            50 + 2,           // Уменьшает ступ с 3 до 2
-            topOffset + 2,    // Уменьшаем отступ с 3 до 2
-            (barWidth - 4) * (player1.hp / player1.maxHp), // Уменьшаем отступы с 6 до 4
-            barHeight - 4,    // Уменьшаем отступ с 6 до 4
-            radius - 2        // Уменьшаем радиус внутренней части
+            50 + 2,
+            topOffset + 2,
+            (barWidth - 4) * (displayedHp1 / player1.maxHp),
+            barHeight - 4,
+            radius - 2
         );
     }
     
@@ -228,6 +253,12 @@ function drawHealthBars() {
     ctx.shadowOffsetX = 0; // Сброс тени
     ctx.shadowOffsetY = 0; // Сброс тени
 
+    // Анимируем HP для player2
+    if (displayedHp2 > player2.hp) {
+        displayedHp2 -= 0.5; // Скорость уменьшения HP
+        if (displayedHp2 < player2.hp) displayedHp2 = player2.hp;
+    }
+
     // HP бар для player2 (справа)
     // Рисуем фоновый бар (пустой)
     ctx.fillStyle = "white";
@@ -241,11 +272,11 @@ function drawHealthBars() {
     
     // Заполненная часть HP бара для player2
     ctx.fillStyle = "red";
-    if (player2.hp > 0) {
+    if (displayedHp2 > 0) {
         roundRect(
-            canvas.width - barWidth - 50 + 2 + (barWidth - 4) * (1 - player2.hp / player2.maxHp),
+            canvas.width - barWidth - 50 + 2 + (barWidth - 4) * (1 - displayedHp2 / player2.maxHp),
             topOffset + 2,
-            (barWidth - 4) * (player2.hp / player2.maxHp),
+            (barWidth - 4) * (displayedHp2 / player2.maxHp),
             barHeight - 4,
             radius - 2
         );
@@ -284,36 +315,39 @@ function drawPowerMeter() {
     const innerRadius = 110; // Увеличнй внутренний радиус дуги на 5%
 
     // Определяем параметры для текущего игрока
-    let centerX, centerY, startAngle, endAngle;
+    let centerX, centerY, startAngle, endAngle, arcLength;
 
     if (currentPlayer === 1) {
         centerX = player1.x + player1.width / 1.55;
-        centerY = player1.y + 30;
-        startAngle = 5 * Math.PI / 4; // 225 градусов для левого игрока
+        centerY = player1.y + 35;
+        startAngle = 5 * Math.PI / 4 + Math.PI - Math.PI / 6; // Повернули на 180 градусов
+        arcLength = Math.PI * 0.85; // Уменьшили длину дуги
+        endAngle = startAngle - (arcLength * (throwPower / maxPower)); // Заполнение против часовой ��трелки
     } else {
         centerX = player2.x + player2.width / 2.5;
         centerY = player2.y + 40;
         startAngle = (3 * Math.PI / 4) + (Math.PI / 6); // 135 + 30 градусов для правого игрока
+        arcLength = Math.PI * 0.85; // Длина дуги для правого игрока
+        endAngle = startAngle + (arcLength * (throwPower / maxPower)); // Заполнение по часовой стрелке
     }
 
     // Фоновая дуга (всегда видна для текущего игрока)
-    endAngle = startAngle + (Math.PI * 0.85); // Полная дуга
     ctx.beginPath();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; // Прозрачно-белый цвет
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)"; // Прорачно-белый цвет
     ctx.lineWidth = outerRadius - innerRadius;
-    ctx.arc(centerX, centerY, (outerRadius + innerRadius) / 2, startAngle, endAngle);
+    ctx.arc(centerX, centerY, (outerRadius + innerRadius) / 2, startAngle, startAngle + (currentPlayer === 1 ? -arcLength : arcLength), currentPlayer === 1);
     ctx.stroke();
 
     // Белая полоска заполнения (видна только при зарядке)
     if (isCharging) {
-        endAngle = startAngle + (Math.PI * 0.85 * (throwPower / maxPower)); // Конец дуги
         ctx.beginPath();
         ctx.strokeStyle = "white";
         ctx.lineWidth = outerRadius - innerRadius;
-        ctx.arc(centerX, centerY, (outerRadius + innerRadius) / 2, startAngle, endAngle);
+        ctx.arc(centerX, centerY, (outerRadius + innerRadius) / 2, startAngle, endAngle, currentPlayer === 1);
         ctx.stroke();
     }
 }
+
 // Функция рисования препятствия
 
 
@@ -326,7 +360,7 @@ function switchPlayer() {
     }
 }
 
-// Обновляем обработчик нажатия мыши для первого игрока
+// Обновляем обработчик нажатия мыши дл первого игрока
 canvas.addEventListener('mousedown', (e) => {
     if (!canThrow || stone || currentPlayer !== 1) return; // Добавляем проверку на текущего игрока
     isMousePressed = true;
@@ -468,32 +502,74 @@ function checkCollision() {
             targetPlayer.hp -= 15;
             if (targetPlayer.hp < 0) targetPlayer.hp = 0;
             stone = null;
-            switchPlayer();
+
+            // Устанавливаем флаг мигания для пораженного игрока
+            if (targetPlayer === player2) {
+                player2Hit = true; // Игрок 2 получил урон
+            } else {
+                player1Hit = true; // Игрок 1 получил урон
+            }
+            hitAnimationStartTime = Date.now();
 
             // Проверка на отсутствие HP
             if (targetPlayer.hp === 0) {
-                const winner = currentPlayer === 1 ? 'Gizmo' : 'Puppet';
+                const winner = targetPlayer === player2 ? 'Puppet' : 'Gizmo';
                 gameOver = true; // Устанавливаем флаг завершения игры
             }
+
+            switchPlayer(); // Меняем игрока после обработки попадания
         }
     }
 }
 
 function displayWinner(winner) {
     const backgroundColor = winner === 'Puppet' ? "#E82C40" : "#89DF6F";
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполняем фон
+    let alpha = 0; // Начальная прозрачность
+    let fontSize = 10; // Начальный размер шрифта
+    const duration = 2000; // Длительность анимации в миллисекундах
+    const startTime = Date.now();
 
-    // Рисуем текст поверх
-    ctx.fillStyle = "white"; // Цвет текста
-    ctx.font = "48px Fortnite"; // Шрифт и размер текста
-    ctx.textAlign = "center"; // Выравнивание текста
-    ctx.textBaseline = "middle"; // Базовая линия текста
-    ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2); // Текст
+    function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
 
-    // Рисуем кнопку
-    ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
+    function animate() {
+        const currentTime = Date.now();
+        const elapsedTime = currentTime - startTime;
+        const progress = Math.min(elapsedTime / duration, 1); // Прогресс от 0 до 1
+
+        const easedProgress = easeInOutQuad(progress);
+
+        // Обновляем прозрачность и размер шрифта с учетом easing
+        alpha = easedProgress;
+        fontSize = 10 + (38 * easedProgress); // От 10 до 48 пикселей
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
+        ctx.fillStyle = `rgba(${parseInt(backgroundColor.slice(1, 3), 16)}, ${parseInt(backgroundColor.slice(3, 5), 16)}, ${parseInt(backgroundColor.slice(5, 7), 16)}, ${alpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполняем фон
+
+        // Рисуем текст поверх
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`; // Цвет текста
+        ctx.font = `${fontSize}px Fortnite`; // Шрифт и размер текста
+        ctx.textAlign = "center"; // Выравнивание текста
+        ctx.textBaseline = "middle"; // Базовая линия текста
+        ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2); // Текст
+
+        // Рисуем кнопку
+        ctx.globalAlpha = alpha; // Устанавливаем прозрачность для кнопки
+        ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
+        ctx.globalAlpha = 1.0; // Восстанавливаем прозрачность
+
+        if (progress < 1) {
+            requestAnimationFrame(animate); // Продолжаем анимацию
+        }
+    }
+
+    setTimeout(() => {
+        requestAnimationFrame(animate); // Запускаем анимацию с задержкой
+    }, 0); // Задержка перед началом анимации
 }
+
 // Вспомогательная функция для роверки попадания точки в треугольник
 function isPointInTriangle(px, py, x1, y1, x2, y2, x3, y3) {
     let area = Math.abs((x2-x1)*(y3-y1) - (x3-x1)*(y2-y1))/2;
@@ -636,13 +712,13 @@ fortniteFont.load().then(function(loadedFont) {
     // Добавляем шрифт в документ
     document.fonts.add(loadedFont);
 
-    // Теперь шрифт загружен, можно использовать его в канвасе
+    // Теперь шрифт загружен, можно использовать ео в канвасе
     ctx.font = "48px Fortnite";
 }).catch(function(error) {
     console.error('Ошибка загрузки шрифта:', error);
 });
 
-// Пер��менные для анимации пульсации
+// Перменные ля анимации пульсации
 let versusScale = 1;
 let scaleDirection = 1;
 const scaleSpeed = 0.0005; // Скорость изменения масштаба
