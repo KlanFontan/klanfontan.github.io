@@ -198,9 +198,23 @@ function drawArrow(x, y, dx, dy, arrowSize) {
     }
 }
 
-// Добавляем функцию отрисовки фона
+// Кэшируем фон и статические элементы
+let backgroundCanvas = document.createElement('canvas');
+let backgroundCtx = backgroundCanvas.getContext('2d');
+backgroundCanvas.width = canvas.width;
+backgroundCanvas.height = canvas.height;
+
+function cacheStaticElements(ctx) {
+    // Отрисовываем фон
+    backgroundCtx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    // Отрисовываем статические элементы, такие как аватар�� и "versus"
+    drawAvatars(ctx);
+    drawVersus(ctx);
+}
+
+// Обновляем функцию отрисовки фона
 function drawBackground() {
-    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundCanvas, 0, 0);
 }
 
 // Функция рисования игрока
@@ -505,30 +519,13 @@ function updateGame() {
         return; // Прекращаем обновление игры, если она завершена
     }
 
-    // Автоматическое использование зелья правым игроком с задержкой
-    if (player2.hp < player2.maxHp / 2 && !potions[1].used && !potionUseTimeout) {
-        potionUseTimeout = setTimeout(() => {
-            usePotion(1);
-            potionUseTimeout = null; // Сбрасываем таймер после использования зелья
-        }, 1000); // Задержка в 1000 мс (1 секунда)
-    }
-
-    if (!emptyHpBarImage.complete) {
-        requestAnimationFrame(updateGame);
-        return;
-    }
-    if (player1.hp > player1.maxHp) player1.hp = player1.maxHp;
-    if (player2.hp > player2.maxHp) player2.hp = player2.maxHp;
-    if (player1.maxHp > 100) player1.maxHp = 100;
-    if (player2.maxHp > 100) player2.maxHp = 100;
-    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
-    
+
     if (isCharging && throwPower < maxPower && canThrow) {
         throwPower += 0.08;
     }
-    
+
     updateStone();
     checkCollision();
 
@@ -537,23 +534,20 @@ function updateGame() {
     drawHealthBars();
     drawStone();
     if (canThrow) drawPowerMeter();
-    
-    // Добавляем отрисовку изображения "versus"
-    drawVersus();
-    
-    // Добавляем отрисовку аватаров
-    drawAvatars();
-    
-    drawPotions(); // Отрисовываем зелья
 
-    drawWindBar(); // Отрисовываем бар силы ветра
+    drawPotions();
+    drawWindBar();
+
+    // Перемещаем отрисовку аватаров сюда, чтобы они были поверх HP баров
+    drawAvatars(ctx);
 
     requestAnimationFrame(updateGame);
 }
+
 // Обновляем функцию повер столкновений
 function checkCollision() {
     if (stone) {
-        // Проверяем, находится ли камень внутри общей области баррикады
+        // Проверяем, находится ли камень внутри общей области арикады
         if ((stone.x >= obstacle.x && 
              stone.x <= obstacle.x + obstacle.width &&
              stone.y >= obstacle.y && 
@@ -595,7 +589,7 @@ function checkCollision() {
             }
             hitAnimationStartTime = Date.now();
 
-            // Проверка на оттствие HP
+            // Проврка на оттствие HP
             if (targetPlayer.hp === 0) {
                 const winner = targetPlayer === player2 ? 'Puppet' : 'Gizmo';
                 gameOver = true; // Устанавливаем флаг завершения игры
@@ -707,8 +701,9 @@ Promise.all([
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
-    updateWind(); // Обновляем силу ветра перед началом игры
-    showCountdown(); // Запускаем отсчет
+    cacheStaticElements(backgroundCtx); // Кэшируем статические элементы
+    updateWind();
+    showCountdown();
 });
 
 // Обработчик нажатия на кнопку
@@ -770,7 +765,7 @@ canvas.addEventListener('touchstart', (e) => {
         }
     });
 
-    // Если касание произошло в пределах зелья, не начинаем зарядку
+    // Если касание произошло в пределах зелья, не начинаем зарядк��
     if (potionTouched) return;
 
     // Проверяем, что касание происходит в пределах игрового поля
@@ -830,7 +825,7 @@ const maxScale = 1.05; // Максимальный масштаб
 const minScale = 0.95; // Минимальный масштаб
 
 // Обновляем функцию отрисовки изображения "versus" с анимацией
-function drawVersus() {
+function drawVersus(ctx) { // Принимаем контекст в качестве параметра
     const versusWidth = 75 * versusScale; // Ширина изображения с учетом масштаба
     const versusHeight = 63 * versusScale; // Высота изображения с учетом масштаба
     const centerX = canvas.width / 2;
@@ -847,7 +842,7 @@ function drawVersus() {
 }
 
 // Функция для отрисовки аватаров
-function drawAvatars() {
+function drawAvatars(ctx) { // Принимаем контекст в качестве параметра
     const avatarSize = 100; // Размер аватара
     const gizmoX = canvas.width / 2 + avatarSize - 30; // Позиция для Gizmo
     const puppetX = canvas.width / 2 - avatarSize - 65; // Позиция для Puppet
@@ -934,4 +929,3 @@ function usePotion(index) {
         }
     }
 }
-
