@@ -79,7 +79,7 @@ backButtonImage.src = 'backButton.png';
 // Координаты и размеры кнопки
 const backButton = {
     x: 50,
-    y: 55, // Подняли кнопк выше, чтобы она не  с моделькой игрка
+    y: 55, // Подняли кнопк выше, чтобы он не  с моделькой игрк
     width: 125, // Предполагаемая ширина кнопки
     height: 45 // Предполагаемая высота кнопки
 };
@@ -154,7 +154,7 @@ function drawWindBar() {
     ctx.fillStyle = "#B3B4FE";
     ctx.fillRect(barX, barY, barWidth, barHeight);
 
-    // Сбрасываем тень перед отрисовкой заполненной части и текста
+    // Сбрсываем тень перед отрисовкой заполненной части и текста
     ctx.shadowColor = "transparent";
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
@@ -207,7 +207,7 @@ backgroundCanvas.height = canvas.height;
 function cacheStaticElements(ctx) {
     // Отрисовываем фон
     backgroundCtx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-    // Отрисовываем статические элементы, такие как аватар�� и "versus"
+    // Отрисовываем статические элементы, такие как аватар и "versus"
     drawAvatars(ctx);
     drawVersus(ctx);
 }
@@ -319,7 +319,7 @@ function drawHealthBars() {
     ctx.shadowOffsetX = 0; // Сброс тени
     ctx.shadowOffsetY = 0; // Сброс тени
 
-    // Отрисовка плашки для player2
+    // Отрисовка плашк�� для player2
     ctx.fillStyle = "rgba(137, 223, 111, 1)";
     const player2NameWidth = ctx.measureText(player2Name).width;
     const player2BoxX = canvas.width / 2 + player2NameWidth + 190;
@@ -352,7 +352,7 @@ function drawHealthBars() {
         radius
     );
     
-    // Заполненная часть HP бара для player2
+    // Заполненная часть HP баа для player2
     ctx.fillStyle = "red";
     if (displayedHp2 > 0) {
         roundRect(
@@ -391,7 +391,7 @@ function drawStone() {
     }
 }
 
-// Обновляем функцию рисования индикатора силы броска
+// бновляем функцию рисования индикатора силы броска
 function drawPowerMeter() {
     const outerRadius = 140; // Увеличенный внешний радиус дуги на 5%
     const innerRadius = 110; // Увеличнй внутренний радиус дуги на 5%
@@ -494,16 +494,15 @@ function autoThrowForPlayer2() {
 }
 
 // Функция обновления камня
-function updateStone() {
+function updateStone(deltaTime) {
     if (stone) {
-        stone.x += stone.speedX;
-        stone.y += stone.speedY;
-        stone.speedY += gravity;
+        stone.x += stone.speedX * deltaTime * 100; // Увеличиваем скорость движения
+        stone.y += stone.speedY * deltaTime * 100;
+        stone.speedY += gravity * deltaTime * 100;
 
-        // Проверяем выход за пределы экрана
         if (stone.x > canvas.width || stone.x < 0 || stone.y > canvas.height) {
             stone = null;
-            switchPlayer(); // Меняем игрока после окончания броска
+            switchPlayer();
         }
     }
 }
@@ -512,6 +511,8 @@ let gameOver = false; // Флаг для проверки авершения и�
 
 let potionUseTimeout = null; // Переменная для хранения таймера
 
+let lastUpdateTime = performance.now(); // Добавляем переменную для отслеживания времени
+
 // Функция обновления игры
 function updateGame() {
     if (gameOver) {
@@ -519,14 +520,18 @@ function updateGame() {
         return; // Прекращаем обновление игры, если она завершена
     }
 
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - lastUpdateTime) / 1000; // Время, прошедшее с последнего обновления в секундах
+    lastUpdateTime = currentTime;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
 
     if (isCharging && throwPower < maxPower && canThrow) {
-        throwPower += 0.08;
+        throwPower += 6 * deltaTime; // Немного увеличиваем скорость зарядки
     }
 
-    updateStone();
+    updateStone(deltaTime);
     checkCollision();
 
     drawPlayer(player1);
@@ -701,7 +706,7 @@ Promise.all([
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
-    cacheStaticElements(backgroundCtx); // Кэшируем статические элементы
+    cacheStaticElements(backgroundCtx); // Кэшируем стические элементы
     updateWind();
     showCountdown();
 });
@@ -765,7 +770,7 @@ canvas.addEventListener('touchstart', (e) => {
         }
     });
 
-    // Если касание произошло в пределах зелья, не начинаем зарядк��
+    // Если касание произошло в пределах зелья, не начинаем зарядк
     if (potionTouched) return;
 
     // Проверяем, что касание происходит в пределах игрового поля
@@ -825,7 +830,7 @@ const maxScale = 1.05; // Максимальный масштаб
 const minScale = 0.95; // Минимальный масштаб
 
 // Обновляем функцию отрисовки изображения "versus" с анимацией
-function drawVersus(ctx) { // Принимаем контекст в качестве параметра
+function drawVersus(ctx) { // Принимаем контекст в качесв параметра
     const versusWidth = 75 * versusScale; // Ширина изображения с учетом масштаба
     const versusHeight = 63 * versusScale; // Высота изображения с учетом масштаба
     const centerX = canvas.width / 2;
