@@ -18,18 +18,18 @@ canvas.height = 300*1.5;
 // Персонажи
 const player1 = { 
     x: 85,
-    y: canvas.height - 250,
-    width: 156,
-    height: 216,
+    y: canvas.height - 230,
+    width: 136,
+    height: 196,
     hp: 100,
     maxHp: 100 
 };
 
 const player2 = { 
     x: canvas.width - 250,
-    y: canvas.height - 250,
-    width: 156,
-    height: 216,
+    y: canvas.height - 230,
+    width: 136,
+    height: 196,
     hp: 100,
     maxHp: 100 
 };
@@ -79,7 +79,7 @@ backButtonImage.src = 'backButton.png';
 // Координаты и размеры кнопки
 const backButton = {
     x: 50,
-    y: 55, // Подняли кнопку выше, чтобы она не  с моделькой игрка
+    y: 55, // Подняли кнопк выше, чтобы она не  с моделькой игрка
     width: 125, // Предполагаемая ширина кнопки
     height: 45 // Предполагаемая высота кнопки
 };
@@ -129,14 +129,82 @@ let player2Hit = false;
 let hitAnimationDuration = 500; // Длительность анимации в миллисекундах
 let hitAnimationStartTime = 0;
 
+// Переменная для силы ветра
+let windStrength = 0;
+
+// Функция для обновления силы ветра
+function updateWind() {
+    windStrength = Math.random() * 12 - 6; // Случайное значение от -3 до 3
+}
+
+// Функция для отрисовки бара силы ветра
+function drawWindBar() {
+    const barWidth = 200;
+    const barHeight = 40;
+    const barX = (canvas.width - barWidth) / 2;
+    const barY = 125;
+
+    // Добавляем тень только для фона бара и стрелок
+    ctx.shadowColor = "#03043E"; // Цвет тени
+    ctx.shadowOffsetX = 0; // Смещение тени по X
+    ctx.shadowOffsetY = 4; // Смещение тени по Y
+    ctx.shadowBlur = 0; // Размытие тени
+
+    // Фон бара
+    ctx.fillStyle = "#B3B4FE";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    // Сбрасываем тень перед отрисовкой заполненной части и текста
+    ctx.shadowColor = "transparent";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.shadowBlur = 0;
+
+    // Ограничиваем значение ветра в диапазоне от -6 до 6
+    const clampedWindStrength = Math.max(-6, Math.min(6, windStrength));
+    const normalizedWindStrength = clampedWindStrength / 6; // Нормализуем значение ветра от -1 до 1
+    const fillWidth = (barWidth / 2) * normalizedWindStrength; // Полная ширина заполнения
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(barX + barWidth / 2, barY, fillWidth, barHeight); // Заполнение от середины фона
+
+    // Отрисовка значения ветра для отладки
+    ctx.fillStyle = "#0003FA";
+    ctx.font = "28px Fortnite";
+    ctx.textAlign = "center";
+    ctx.fillText(`Wind`, canvas.width / 2, barY + 21);
+
+    const arrowSize = 20; // Размер стрелок
+    ctx.fillStyle = clampedWindStrength < 0 ? "#FFFFFF" : "#B3B4FE"; // Цвет левой стрелки
+    drawArrow(barX - arrowSize - 35, barY + barHeight / 2, arrowSize + 20, 0, arrowSize ); // Левая стрелка
+
+    ctx.fillStyle = clampedWindStrength > 0 ? "#FFFFFF" : "#B3B4FE"; // Цвет правой стрелки
+    drawArrow(barX + barWidth + arrowSize + 35, barY + barHeight / 2, -arrowSize - 20, 0, arrowSize); // Правая стрелка
+}
+
+// Вспомогательная функция для рисования стрелки
+function drawArrow(x, y, dx, dy, arrowSize) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + dx, y - arrowSize / 2);
+    ctx.lineTo(x + dx, y + arrowSize / 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Убираем обводку для залитой стрелки
+    if (ctx.fillStyle !== "#FFFFFF") { // Проверяем, что стрелка не залита белым
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.stroke();
+    }
+}
+
 // Добавляем функцию отрисовки фона
 function drawBackground() {
     ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
 }
 
 // Функция рисования игрока
-function drawPlayer(player) {
-    ctx.imageSmoothingEnabled = false; // Отключаем сглаживание для четкости
+function drawPlayer(player) { // Отключаем сглаживание для четкости
 
     // Проверяем, нужно ли мигание
     let isHit = (player === player1 && player1Hit) || (player === player2 && player2Hit);
@@ -180,7 +248,7 @@ function drawHealthBars() {
     ctx.shadowOffsetY = 4;
     ctx.fillText(player1Name, 460, topOffset - 25);
     ctx.shadowOffsetX = 0; // Сброс тени
-    ctx.shadowOffsetY = 0; // Сброс тени
+    ctx.shadowOffsetY = 0; // Сброс тен
 
     // Отрисовка плашки для player1
     ctx.fillStyle = "rgba(232, 44, 64, 1)";
@@ -283,7 +351,7 @@ function drawHealthBars() {
     }
 }
 
-// Добавляем вспомогательную функцию для рисования прямоугольника с закругленными краями
+// Добавляем вспомогательную функцию для рисования прямоугольника с акругленными краями
 function roundRect(x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -322,7 +390,7 @@ function drawPowerMeter() {
         centerY = player1.y + 35;
         startAngle = 5 * Math.PI / 4 + Math.PI - Math.PI / 6; // Повернули на 180 градусов
         arcLength = Math.PI * 0.85; // Уменьшили длину дуги
-        endAngle = startAngle - (arcLength * (throwPower / maxPower)); // Заполнение против часовой ��трелки
+        endAngle = startAngle - (arcLength * (throwPower / maxPower)); // Заполнение против часовой трелки
     } else {
         centerX = player2.x + player2.width / 2.5;
         centerY = player2.y + 40;
@@ -355,6 +423,7 @@ function drawPowerMeter() {
 function switchPlayer() {
     currentPlayer = currentPlayer === 1 ? 2 : 1;
     canThrow = true;
+    updateWind(); // Обновляем силу ветра в начале каждого хода
     if (currentPlayer === 2) {
         autoThrowForPlayer2();
     }
@@ -377,18 +446,19 @@ canvas.addEventListener('mouseup', (e) => {
 
 // Функция ля выполнения броска
 function performThrow() {
+    const windEffect = windStrength * 0.5; // Влияние ветра на скорость
     if (currentPlayer === 1) {
         stone = {
-            x: player1.x, // Левая сторона игока
-            y: player1.y + player1.height / 2, // Примерная высота руки
-            speedX: (stoneSpeed + throwPower) * 0.8,
+            x: player1.x,
+            y: player1.y + player1.height / 2,
+            speedX: (stoneSpeed + throwPower) * 0.8 + windEffect,
             speedY: -(stoneSpeed + throwPower) * 1.2,
         };
     } else {
         stone = {
-            x: player2.x + player2.width, // Правая сторона игрока
-            y: player2.y + player2.height / 2, // Примерная высота руки
-            speedX: -(stoneSpeed + throwPower) * 0.8,
+            x: player2.x + player2.width,
+            y: player2.y + player2.height / 2,
+            speedX: -(stoneSpeed + throwPower) * 0.8 + windEffect,
             speedY: -(stoneSpeed + throwPower) * 1.2,
         };
     }
@@ -426,11 +496,21 @@ function updateStone() {
 
 let gameOver = false; // Флаг для проверки авершения игры
 
+let potionUseTimeout = null; // Переменная для хранения таймера
+
 // Функция обновления игры
 function updateGame() {
     if (gameOver) {
         displayWinner(currentPlayer === 1 ? 'Gizmo' : 'Puppet');
         return; // Прекращаем обновление игры, если она завершена
+    }
+
+    // Автоматическое использование зелья правым игроком с задержкой
+    if (player2.hp < player2.maxHp / 2 && !potions[1].used && !potionUseTimeout) {
+        potionUseTimeout = setTimeout(() => {
+            usePotion(1);
+            potionUseTimeout = null; // Сбрасываем таймер после использования зелья
+        }, 1000); // Задержка в 1000 мс (1 секунда)
     }
 
     if (!emptyHpBarImage.complete) {
@@ -464,6 +544,10 @@ function updateGame() {
     // Добавляем отрисовку аватаров
     drawAvatars();
     
+    drawPotions(); // Отрисовываем зелья
+
+    drawWindBar(); // Отрисовываем бар силы ветра
+
     requestAnimationFrame(updateGame);
 }
 // Обновляем функцию повер столкновений
@@ -511,7 +595,7 @@ function checkCollision() {
             }
             hitAnimationStartTime = Date.now();
 
-            // Проверка на отсутствие HP
+            // Проверка на оттствие HP
             if (targetPlayer.hp === 0) {
                 const winner = targetPlayer === player2 ? 'Puppet' : 'Gizmo';
                 gameOver = true; // Устанавливаем флаг завершения игры
@@ -521,6 +605,8 @@ function checkCollision() {
         }
     }
 }
+
+let isBackButtonVisible = false; // Флаг видимости кнопки "Назад"
 
 function displayWinner(winner) {
     const backgroundColor = winner === 'Puppet' ? "#E82C40" : "#89DF6F";
@@ -555,10 +641,12 @@ function displayWinner(winner) {
         ctx.textBaseline = "middle"; // Базовая линия текста
         ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2); // Текст
 
-        // Рисуем кнопку
-        ctx.globalAlpha = alpha; // Устанавливаем прозрачность для кнопки
-        ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
-        ctx.globalAlpha = 1.0; // Восстанавливаем прозрачность
+        // Рисуем кнопку только если она должна быть видна
+        if (isBackButtonVisible) {
+            ctx.globalAlpha = alpha; // Устанавливаем прозрачность для кнопки
+            ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
+            ctx.globalAlpha = 1.0; // Восстанавливаем прозрачность
+        }
 
         if (progress < 1) {
             requestAnimationFrame(animate); // Продолжаем анимацию
@@ -566,6 +654,7 @@ function displayWinner(winner) {
     }
 
     setTimeout(() => {
+        isBackButtonVisible = true; // Устанавливаем флаг видимости кнопки
         requestAnimationFrame(animate); // Запускаем анимацию с задержкой
     }, 0); // Задержка перед началом анимации
 }
@@ -618,12 +707,13 @@ Promise.all([
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
+    updateWind(); // Обновляем силу ветра перед началом игры
     showCountdown(); // Запускаем отсчет
 });
 
 // Обработчик нажатия на кнопку
 canvas.addEventListener('click', (e) => {
-    if (gameOver) {
+    if (isBackButtonVisible) { // Проверяем видимость кнопки
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
@@ -632,6 +722,7 @@ canvas.addEventListener('click', (e) => {
             mouseY >= backButton.y && mouseY <= backButton.y + backButton.height) {
             // Действие при нажатии на кнопку
             resetGame();
+            isBackButtonVisible = false; // Сбрасываем флаг видимости после нажатия
         }
     }
 });
@@ -662,12 +753,25 @@ canvas.addEventListener('touchstart', (e) => {
     const touchX = touch.clientX;
     const touchY = touch.clientY;
 
-    // Проверяем, что касание происходит в пределах кнопки "Назад"
-    if (isTouchWithinBackButton(touchX, touchY)) {
-        // Действие при нажатии на кнопку "Назад"
+    // Проверяем, что касание происходит в пределах кнопки "Назад" и кнопка видна
+    if (isBackButtonVisible && isTouchWithinBackButton(touchX, touchY)) {
         window.location.href = '../../../index.html';
         return;
     }
+
+    // Проверяем, что касание происходит в пределах зелий
+    let potionTouched = false;
+    potions.forEach((potion, index) => {
+        if (!potion.used && touchX >= potion.x && touchX <= potion.x + potion.width &&
+            touchY >= potion.y && touchY <= potion.y + potion.height) {
+            usePotion(index);
+            potionTouched = true;
+            return;
+        }
+    });
+
+    // Если касание произошло в пределах зелья, не начинаем зарядку
+    if (potionTouched) return;
 
     // Проверяем, что касание происходит в пределах игрового поля
     if (isTouchWithinGameArea(touchX, touchY)) {
@@ -732,7 +836,7 @@ function drawVersus() {
     const centerX = canvas.width / 2;
     const centerY = versusHeight / 2 - 35;
     
-    // Изменяем координаты отрисовки, чтобы пульсация происходила от центра
+    // Изменяем координаты отрисовки, чтобы пульсация происходила от цента
     ctx.drawImage(versusImage, centerX - versusWidth / 2, centerY - versusHeight / 2 + 65, versusWidth, versusHeight);
 
     // Обновляем масштаб для анимации пульсации
@@ -751,5 +855,83 @@ function drawAvatars() {
 
     ctx.drawImage(gizmoAvatarImage, gizmoX, avatarY, avatarSize, avatarSize);
     ctx.drawImage(puppetAvatarImage, puppetX, avatarY, avatarSize, avatarSize);
+}
+
+// Добавляем изображение зелья
+const potionImage = new Image();
+potionImage.src = 'potion.png';
+
+// Позиции и размеры зелья для обоих игроков
+const potions = [
+    {
+        x: 15, // Позиция по X для первого игрока
+        y: 35, // Позиция по Y
+        width: 50, // Ширина зелья
+        height: 70, // Высота зелья
+        used: false // Флаг использования
+    },
+    {
+        x: canvas.width - 65, // Позиция по X для второго игрока
+        y: 35, // Позиция по Y
+        width: 50, // Ширина зелья
+        height: 70, // Флаг использования
+        used: false // Флаг использования
+    }
+];
+
+// Функция для отрисовки зелий
+function drawPotions() {
+    potions.forEach((potion, index) => {
+        if (!potion.used) {
+            if (index === 1) {
+                // Сохраняем текущее состояние контекста
+                ctx.save();
+                // Перемещаем контекст к позиции зелья
+                ctx.translate(potion.x + potion.width / 2, potion.y + potion.height / 2);
+                // Отражаем по горизонтали
+                ctx.scale(-1, 1);
+                // Отрисовываем изображение, смещая его обратно
+                ctx.drawImage(potionImage, -potion.width / 2, -potion.height / 2, potion.width, potion.height);
+                // Восстанавливаем состояние контекста
+                ctx.restore();
+            } else {
+                ctx.drawImage(potionImage, potion.x, potion.y, potion.width, potion.height);
+            }
+        }
+    });
+}
+
+// Обработчик нажатия на зелье
+canvas.addEventListener('click', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    potions.forEach((potion, index) => {
+        if (!potion.used && mouseX >= potion.x && mouseX <= potion.x + potion.width &&
+            mouseY >= potion.y && mouseY <= potion.y + potion.height) {
+            usePotion(index);
+        }
+    });
+});
+
+// Функция использования зелья
+function usePotion(index) {
+    const player = index === 0 ? player1 : player2;
+    let displayedHp = index === 0 ? displayedHp1 : displayedHp2;
+
+    if (player.hp < player.maxHp) {
+        player.hp = Math.min(player.hp + 20, player.maxHp); // Восстанавливаем 20 HP
+        displayedHp = player.hp; // Обновляем отображаемое здоровье
+        potions[index].used = true; // Зелье использовано
+
+        // Обновляем переменные для анимации HP
+        if (index === 0) {
+            displayedHp1 = displayedHp;
+        } else {
+            displayedHp2 = displayedHp;
+        }
+    }
 }
 
