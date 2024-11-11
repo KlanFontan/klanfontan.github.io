@@ -61,8 +61,8 @@ const obstacle = {
     color: "#666666" // Серый цвет
 };
 
-const player1DeathFrames = ['/klanfontan.github.io-main/assets/puppet_frames_death/frame_00.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_01.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_02.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_03.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_04.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_05.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_06.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_07.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_08.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_09.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_10.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_11.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_12.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_13.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_14.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_15.png']; // Добавьте все кадры
-const player2DeathFrames = ['/klanfontan.github.io-main/assets/gizmo_frames_death/frame_00.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_01.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_02.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_03.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_04.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_05.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_06.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_07.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_08.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_09.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_10.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_11.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_12.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_13.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_14.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_15.png']; // Добавьте все кадры
+const player1DeathFrames = ['/assets/puppet_frames_death/frame_00.png', '/assets/puppet_frames_death/frame_01.png', '/assets/puppet_frames_death/frame_02.png', '/assets/puppet_frames_death/frame_03.png', '/assets/puppet_frames_death/frame_04.png', '/assets/puppet_frames_death/frame_05.png', '/assets/puppet_frames_death/frame_06.png', '/assets/puppet_frames_death/frame_07.png', '/assets/puppet_frames_death/frame_08.png', '/assets/puppet_frames_death/frame_09.png', '/assets/puppet_frames_death/frame_10.png', '/assets/puppet_frames_death/frame_11.png', '/assets/puppet_frames_death/frame_12.png', '/assets/puppet_frames_death/frame_13.png', '/assets/puppet_frames_death/frame_14.png', '/assets/puppet_frames_death/frame_15.png']; // Добавьте все кадры
+const player2DeathFrames = ['/assets/gizmo_frames_death/frame_00.png', '/assets/gizmo_frames_death/frame_01.png', '/assets/gizmo_frames_death/frame_02.png', '/assets/gizmo_frames_death/frame_03.png', '/assets/gizmo_frames_death/frame_04.png', '/assets/gizmo_frames_death/frame_05.png', '/assets/gizmo_frames_death/frame_06.png', '/assets/gizmo_frames_death/frame_07.png', '/assets/gizmo_frames_death/frame_08.png', '/assets/gizmo_frames_death/frame_09.png', '/assets/gizmo_frames_death/frame_10.png', '/assets/gizmo_frames_death/frame_11.png', '/assets/gizmo_frames_death/frame_12.png', '/assets/gizmo_frames_death/frame_13.png', '/assets/gizmo_frames_death/frame_14.png', '/assets/gizmo_frames_death/frame_15.png']; // Добавьте все кадры
 
 
 // В начале файла добавляем массивы для хранения предзагруженных изображений
@@ -104,10 +104,10 @@ emptyHpBarImage.src = 'emptyHpBar.png';
 
 // Добавляем згрузку изображений персонажей
 const player1Image = new Image();
-player1Image.src = '/klanfontan.github.io-main/assets/puppet_frames/frame_00.png';
+player1Image.src = '/assets/puppet_frames/frame_00.png';
 
 const player2Image = new Image();
-player2Image.src = '/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png';
+player2Image.src = '/assets/gizmo_frames/frame_00.png';
 
 // Добавляем изображение кнопки
 const backButtonImage = new Image();
@@ -498,8 +498,8 @@ canvas.addEventListener('mouseup', (e) => {
 });
 
 // Массивы для хранения кадров анимации
-const player1Frames = ['/klanfontan.github.io-main/assets/puppet_frames/frame_00.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_01.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_02.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_03.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_04.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_05.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_06.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_07.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_08.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_09.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_10.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_11.png']; // Добавьте все кадры
-const player2Frames = ['/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_01.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_02.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_03.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_04.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_05.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_06.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_07.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_08.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_09.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_10.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_11.png']; // Добавьте все кадры
+const player1Frames = ['/assets/puppet_frames/frame_00.png', '/assets/puppet_frames/frame_01.png', '/assets/puppet_frames/frame_02.png', '/assets/puppet_frames/frame_03.png', '/assets/puppet_frames/frame_04.png', '/assets/puppet_frames/frame_05.png', '/assets/puppet_frames/frame_06.png', '/assets/puppet_frames/frame_07.png', '/assets/puppet_frames/frame_08.png', '/assets/puppet_frames/frame_09.png', '/assets/puppet_frames/frame_10.png', '/assets/puppet_frames/frame_11.png']; // Добавьте все кадры
+const player2Frames = ['/assets/gizmo_frames/frame_00.png', '/assets/gizmo_frames/frame_01.png', '/assets/gizmo_frames/frame_02.png', '/assets/gizmo_frames/frame_03.png', '/assets/gizmo_frames/frame_04.png', '/assets/gizmo_frames/frame_05.png', '/assets/gizmo_frames/frame_06.png', '/assets/gizmo_frames/frame_07.png', '/assets/gizmo_frames/frame_08.png', '/assets/gizmo_frames/frame_09.png', '/assets/gizmo_frames/frame_10.png', '/assets/gizmo_frames/frame_11.png']; // Добавьте все кадры
 
 let currentFrame = 0;
 let animationInterval;
@@ -525,7 +525,7 @@ function performThrow() {
     const normalizedPower = stoneSpeed + throwPower;
     
     if (currentPlayer === 1) {
-        stopAnimation = animatePlayer(player1Frames, player1Image, '/klanfontan.github.io-main/assets/puppet_frames/frame_00.png');
+        stopAnimation = animatePlayer(player1Frames, player1Image, '/assets/puppet_frames/frame_00.png');
         stone = {
             x: player1.x + player1.width - 210,
             y: player1.y + player1.height / 2 + 20,
@@ -533,7 +533,7 @@ function performThrow() {
             speedY: -normalizedPower * 1.5,
         };
     } else {
-        stopAnimation = animatePlayer(player2Frames, player2Image, '/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png');
+        stopAnimation = animatePlayer(player2Frames, player2Image, '/assets/gizmo_frames/frame_00.png');
         stone = {
             x: player2.x + 210,
             y: player2.y + player2.height / 2 + 20,
