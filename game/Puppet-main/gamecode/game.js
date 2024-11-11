@@ -17,23 +17,27 @@ canvas.height = 300*1.5;
 
 // Персонажи
 const player1 = { 
-    x: 85,
-    y: canvas.height - 230,
-    width: 136,
-    height: 196,
+    x: 15,
+    y: canvas.height - 350,
+    width: 256,
+    height: 316,
+    hitboxHeight: 316 / 6, // Добавляем отдельную высоту для хитбокса
     hp: 100,
     maxHp: 100 
 };
 
 const player2 = { 
-    x: canvas.width - 250,
-    y: canvas.height - 230,
-    width: 136,
-    height: 196,
+    x: canvas.width - 290,
+    y: canvas.height - 350,
+    width: 256,
+    height: 316,
+    hitboxHeight: 316 / 6, // Добавляем отдельную высоту для хитбокса
     hp: 100,
     maxHp: 100 
 };
 
+let lastUpdateTime = performance.now();
+let winnerDetermined = false; 
 // Добавляем параметры для управления ходами
 let currentPlayer = 1; // Текущий игрок (1 или 2)
 let canThrow = true;  // Можно ли сейчас бросать
@@ -57,6 +61,39 @@ const obstacle = {
     color: "#666666" // Серый цвет
 };
 
+const player1DeathFrames = ['/klanfontan.github.io-main/assets/puppet_frames_death/frame_00.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_01.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_02.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_03.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_04.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_05.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_06.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_07.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_08.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_09.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_10.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_11.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_12.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_13.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_14.png', '/klanfontan.github.io-main/assets/puppet_frames_death/frame_15.png']; // Добавьте все кадры
+const player2DeathFrames = ['/klanfontan.github.io-main/assets/gizmo_frames_death/frame_00.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_01.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_02.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_03.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_04.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_05.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_06.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_07.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_08.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_09.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_10.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_11.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_12.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_13.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_14.png', '/klanfontan.github.io-main/assets/gizmo_frames_death/frame_15.png']; // Добавьте все кадры
+
+
+// В начале файла добавляем массивы для хранения предзагруженных изображений
+const loadedPlayer1DeathFrames = [];
+const loadedPlayer2DeathFrames = [];
+
+// Функция для предзагрузки кадров смерти
+function preloadDeathFrames() {
+    let loadedCount = 0;
+    const totalFrames = player1DeathFrames.length + player2DeathFrames.length;
+    
+    function onFrameLoad() {
+        loadedCount++;
+        console.log(`Loaded ${loadedCount}/${totalFrames} death frames`); // Отладка
+    }
+
+    player1DeathFrames.forEach(src => {
+        const img = new Image();
+        img.onload = onFrameLoad;
+        img.src = src;
+        loadedPlayer1DeathFrames.push(img);
+    });
+    
+    player2DeathFrames.forEach(src => {
+        const img = new Image();
+        img.onload = onFrameLoad;
+        img.src = src;
+        loadedPlayer2DeathFrames.push(img);
+    });
+}
+
 // Создаем и загружаем изображение фона
 const backgroundImage = new Image();
 backgroundImage.src = 'background.png';
@@ -67,10 +104,10 @@ emptyHpBarImage.src = 'emptyHpBar.png';
 
 // Добавляем згрузку изображений персонажей
 const player1Image = new Image();
-player1Image.src = 'puppet.png';
+player1Image.src = '/klanfontan.github.io-main/assets/puppet_frames/frame_00.png';
 
 const player2Image = new Image();
-player2Image.src = 'gizmo.png';
+player2Image.src = '/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png';
 
 // Добавляем изображение кнопки
 const backButtonImage = new Image();
@@ -218,17 +255,16 @@ function drawBackground() {
 }
 
 // Функция рисования игрока
-function drawPlayer(player) { // Отключаем сглаживание для четкости
-
-    // Проверяем, нужно ли мигание
-    let isHit = (player === player1 && player1Hit) || (player === player2 && player2Hit);
+function drawPlayer(player) {
+    // Проверяем, нужно ли мигание и не закончилась ли игра
+    let isHit = !gameOver && ((player === player1 && player1Hit) || (player === player2 && player2Hit));
     let elapsedTime = Date.now() - hitAnimationStartTime;
 
     if (isHit && elapsedTime < hitAnimationDuration) {
-        // Меняем прозрачность, если прошло меньше половины времени анимации
+        // Меняем прозрачность только если игра не окончена
         ctx.globalAlpha = (Math.floor(elapsedTime / 100) % 2 === 0) ? 0.5 : 1.0;
     } else {
-        // Сбрасываем флаг мигания и прозрачность, если анимация завершена
+        // Сбрасываем флаг мигания и прозрачность
         if (player === player1) player1Hit = false;
         if (player === player2) player2Hit = false;
         ctx.globalAlpha = 1.0;
@@ -241,17 +277,20 @@ function drawPlayer(player) { // Отключаем сглаживание дл�
         ctx.drawImage(player2Image, player.x, player.y, player.width, player.height);
     }
 
-    // Восстанавливаем прозрачность для других элементов
+    // Восстанавливаем прозрачность
     ctx.globalAlpha = 1.0;
 }
 
 // Функция отрисовки HP баров и никнеймов
 function drawHealthBars() {
     // Размеры HP бара
-    const barWidth = 450;  // Оставляем прежнюю длину
-    const barHeight = 12;  // Уменьшаем высоту с 15 до 7.5
+    const barWidth = 350;  // Оставляем прежнюю длину
+    const barHeight = 12;  // Уменьшаем выоту с 15 до 7.5
     const topOffset = 70;
     const radius = 6;      // Уменьшаем радиус закругления с 7 до 3.5
+
+    const leftBarX = 150; // Было 50
+    const rightBarX = canvas.width - barWidth - 150; // Было canvas.width - barWidth - 50
     
     // Отрисовка никнейма для player1
     ctx.fillStyle = "white";
@@ -289,7 +328,7 @@ function drawHealthBars() {
     // Рисуем фоновый бар (пусто)
     ctx.fillStyle = "white";
     roundRect(
-        50,
+        leftBarX,
         topOffset,
         barWidth,
         barHeight,
@@ -300,7 +339,7 @@ function drawHealthBars() {
     ctx.fillStyle = "red";
     if (displayedHp1 > 0) {
         roundRect(
-            50 + 2,
+            leftBarX + 2,
             topOffset + 2,
             (barWidth - 4) * (displayedHp1 / player1.maxHp),
             barHeight - 4,
@@ -319,7 +358,7 @@ function drawHealthBars() {
     ctx.shadowOffsetX = 0; // Сброс тени
     ctx.shadowOffsetY = 0; // Сброс тени
 
-    // Отрисовка плашк�� для player2
+    // Отрисовка плашк для player2
     ctx.fillStyle = "rgba(137, 223, 111, 1)";
     const player2NameWidth = ctx.measureText(player2Name).width;
     const player2BoxX = canvas.width / 2 + player2NameWidth + 190;
@@ -345,7 +384,7 @@ function drawHealthBars() {
     // Рисуем фоновый бар (пустой)
     ctx.fillStyle = "white";
     roundRect(
-        canvas.width - barWidth - 50,
+        rightBarX,
         topOffset,
         barWidth,
         barHeight,
@@ -356,7 +395,7 @@ function drawHealthBars() {
     ctx.fillStyle = "red";
     if (displayedHp2 > 0) {
         roundRect(
-            canvas.width - barWidth - 50 + 2 + (barWidth - 4) * (1 - displayedHp2 / player2.maxHp),
+            rightBarX + 2 + (barWidth - 4) * (1 - displayedHp2 / player2.maxHp),
             topOffset + 2,
             (barWidth - 4) * (displayedHp2 / player2.maxHp),
             barHeight - 4,
@@ -401,13 +440,13 @@ function drawPowerMeter() {
 
     if (currentPlayer === 1) {
         centerX = player1.x + player1.width / 1.55;
-        centerY = player1.y + 35;
+        centerY = player1.y + 150;
         startAngle = 5 * Math.PI / 4 + Math.PI - Math.PI / 6; // Повернули на 180 градусов
         arcLength = Math.PI * 0.85; // Уменьшили длину дуги
         endAngle = startAngle - (arcLength * (throwPower / maxPower)); // Заполнение против часовой трелки
     } else {
         centerX = player2.x + player2.width / 2.5;
-        centerY = player2.y + 40;
+        centerY = player2.y + 150;
         startAngle = (3 * Math.PI / 4) + (Math.PI / 6); // 135 + 30 градусов для правого игрока
         arcLength = Math.PI * 0.85; // Длина дуги для правого игрока
         endAngle = startAngle + (arcLength * (throwPower / maxPower)); // Заполнение по часовой стрелке
@@ -458,38 +497,119 @@ canvas.addEventListener('mouseup', (e) => {
     performThrow();
 });
 
-// Функция ля выполнения броска
+// Массивы для хранения кадров анимации
+const player1Frames = ['/klanfontan.github.io-main/assets/puppet_frames/frame_00.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_01.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_02.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_03.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_04.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_05.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_06.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_07.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_08.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_09.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_10.png', '/klanfontan.github.io-main/assets/puppet_frames/frame_11.png']; // Добавьте все кадры
+const player2Frames = ['/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_01.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_02.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_03.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_04.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_05.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_06.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_07.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_08.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_09.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_10.png', '/klanfontan.github.io-main/assets/gizmo_frames/frame_11.png']; // Добавьте все кадры
+
+let currentFrame = 0;
+let animationInterval;
+
+// Функция для загрузки всех кадров
+function preloadFrames(frames) {
+    return Promise.all(frames.map(src => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = resolve;
+            img.onerror = reject;
+        });
+    }));
+}
+
+// Функция для выполнения броска
 function performThrow() {
     const windEffect = windStrength * 0.5; // Влияние ветра на скорость
+    let stopAnimation;
+
+    // Нормализуем силу броска для обоих игроков
+    const normalizedPower = stoneSpeed + throwPower;
+    
     if (currentPlayer === 1) {
+        stopAnimation = animatePlayer(player1Frames, player1Image, '/klanfontan.github.io-main/assets/puppet_frames/frame_00.png');
         stone = {
-            x: player1.x,
-            y: player1.y + player1.height / 2,
-            speedX: (stoneSpeed + throwPower) * 0.8 + windEffect,
-            speedY: -(stoneSpeed + throwPower) * 1.2,
+            x: player1.x + player1.width - 210,
+            y: player1.y + player1.height / 2 + 20,
+            speedX: normalizedPower + windEffect,
+            speedY: -normalizedPower * 1.5,
         };
     } else {
+        stopAnimation = animatePlayer(player2Frames, player2Image, '/klanfontan.github.io-main/assets/gizmo_frames/frame_00.png');
         stone = {
-            x: player2.x + player2.width,
-            y: player2.y + player2.height / 2,
-            speedX: -(stoneSpeed + throwPower) * 0.8 + windEffect,
-            speedY: -(stoneSpeed + throwPower) * 1.2,
+            x: player2.x + 210,
+            y: player2.y + player2.height / 2 + 20,
+            speedX: -(normalizedPower) + windEffect, // Убрал множитель 0.8, который ослаблял бросок
+            speedY: -normalizedPower * 1.5,
         };
     }
     
     throwPower = 0;
     canThrow = false;
+
+    setTimeout(() => {
+        stopAnimation();
+    }, 350);
 }
+
+// Функция для анимации игрока
+function animatePlayer(frames, playerImage, staticImage) {
+    currentFrame = 0;
+    let lastFrameTime = performance.now();
+    let animationActive = true; // Флаг для отслеживания состояния анимации
+
+    function step(currentTime) {
+        if (!animationActive) return; // Прекращаем анимацию, если она не активн
+
+        const deltaTime = currentTime - lastFrameTime;
+
+        if (deltaTime >= 25) { // Уменьшенный интервал до 30 мс для еще большего ускорения анимации
+            playerImage.src = frames[currentFrame];
+            currentFrame = (currentFrame + 1) % frames.length;
+            lastFrameTime = currentTime;
+        }
+
+        requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+
+    // Функция для остановки анимации и возврата к статическому изображению
+    function stopAnimation() {
+        animationActive = false;
+        playerImage.src = staticImage;
+    }
+
+    return stopAnimation;
+}
+// Предзагрузка кадров перед началом игры
+Promise.all([
+    preloadFrames(player1Frames),
+    preloadFrames(player2Frames)
+]).then(() => {
+    // Все кадры загружены, можно начинать игру
+    updateGame();
+}).catch(error => {
+    console.error('Ошибка загрузки кадров:', error);
+});
 
 // Функция для автоматического броска второго игрока
 function autoThrowForPlayer2() {
     if (currentPlayer === 2 && canThrow) {
-        isCharging = true;
-        const randomTime = Math.random() * 800 + 400; // Случайное время от 500 до 2500 мс
-        setTimeout(() => {
-            isCharging = false;
-            performThrow();
-        }, randomTime);
+        if (player2.hp < player2.maxHp / 2 && !potions[1].used) {
+            setTimeout(() => {
+                usePotion(1);
+                setTimeout(() => {
+                    isCharging = false;
+                    performThrow();
+                }, 500);
+            }, 500);
+        } else {
+            isCharging = true;
+            const randomTime = Math.random() * 800 + 400;
+            setTimeout(() => {
+                isCharging = false;
+                performThrow();
+            }, randomTime);
+        }
     }
 }
 
@@ -511,45 +631,134 @@ let gameOver = false; // Флаг для проверки авершения и�
 
 let potionUseTimeout = null; // Переменная для хранения таймера
 
-let lastUpdateTime = performance.now(); // Добавляем переменную для отслеживания времени
+let countdownActive = true; // Флаг для отслеживания активности отсчета
+
+function showCountdown() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст перед отрисовкой
+    ctx.fillStyle = "rgba(232, 44, 64, 1)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Заливаем фон красным
+
+    ctx.fillStyle = "white";
+    ctx.font = "100px Fortnite"; // Устанавливаем шрифт и размер
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(countdown, canvas.width / 2, canvas.height / 2); // Рисуем цифру
+
+    if (countdown > 1) {
+        countdown--;
+        setTimeout(showCountdown, 1000); // Уменьшаем отсчет каждую секунду
+    } else {
+        setTimeout(() => {
+            countdown = 3; // Сбрасываем отсчет для следующей игры
+            countdownActive = false; // Отсче завершен
+            updateGame(); // Начинаем игру через секунду после "1"
+        }, 1000);
+    }
+}
 
 // Функция обновления игры
 function updateGame() {
-    if (gameOver) {
-        displayWinner(currentPlayer === 1 ? 'Gizmo' : 'Puppet');
-        return; // Прекращаем обновление игры, если она завершена
-    }
+    if (countdownActive) return;
 
     const currentTime = performance.now();
-    const deltaTime = (currentTime - lastUpdateTime) / 1000; // Время, прошедшее с последнего обновления в секундах
+    const deltaTime = (currentTime - lastUpdateTime) / 1000;
     lastUpdateTime = currentTime;
 
+    // Очищаем холст и рисуем фон
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawBackground();
 
+    // Обновляем игровую логику
     if (isCharging && throwPower < maxPower && canThrow) {
-        throwPower += 6 * deltaTime; // Немного увеличиваем скорость зарядки
+        throwPower += 6 * deltaTime;
     }
 
     updateStone(deltaTime);
     checkCollision();
 
+    // Отрисовываем игроков всегда с полной прозрачностью
+    ctx.globalAlpha = 1.0;
     drawPlayer(player1);
     drawPlayer(player2);
-    drawHealthBars();
-    drawStone();
-    if (canThrow) drawPowerMeter();
 
+    // Рисуем камень, если он есть
+    if (stone) {
+        drawStone();
+    }
+
+    // Если игра окончена, уменьшаем прозрачность интерфейса
+    if (gameOver || winnerDetermined) {
+        interfaceAlpha = Math.max(0, interfaceAlpha - 0.05);
+    }
+
+    // Отрисовываем интерфейс с текущей прозрачностью
+    ctx.globalAlpha = interfaceAlpha;
+    drawHealthBars();
     drawPotions();
     drawWindBar();
-
-    // Перемещаем отрисовку аватаров сюда, чтобы они были поверх HP баров
     drawAvatars(ctx);
+    if (!gameOver) drawVersus(ctx);
+    if (canThrow) drawPowerMeter();
 
-    requestAnimationFrame(updateGame);
+    // Восстанавливаем прозрачность
+    ctx.globalAlpha = 1.0;
+
+    // Продолжаем анимацию, если игра не окончена или камень все еще летит
+    if (!gameOver || stone !== null) {
+        requestAnimationFrame(updateGame);
+    }
 }
 
-// Обновляем функцию повер столкновений
+// Функция для анимации смерти игрока
+function playDeathAnimation(playerNumber, callback) {
+    console.log('Starting death animation for player', playerNumber);
+    let currentFrame = 0;
+    let animationCount = 0; // Счетчик проигрываний анимации
+    const maxAnimations = 6; // Количество повторений анимации
+    const frames = playerNumber === 1 ? loadedPlayer1DeathFrames : loadedPlayer2DeathFrames;
+    const frameInterval = 25;
+    
+    function animate() {
+        if (currentFrame >= frames.length) {
+            animationCount++; // Увеличиваем счетчик после завершения одного цикла
+            
+            if (animationCount < maxAnimations) {
+                // Если проиграли меньше 3 раз, начинаем сначала
+                currentFrame = 0;
+                requestAnimationFrame(() => setTimeout(animate, frameInterval));
+                return;
+            } else {
+                // После 3 проигрываний вызываем callback
+                console.log('Animation complete after', maxAnimations, 'plays');
+                if (callback) callback();
+                return;
+            }
+        }
+
+        const targetPlayer = playerNumber === 1 ? player1Image : player2Image;
+        targetPlayer.src = frames[currentFrame].src;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        drawPlayer(player1);
+        drawPlayer(player2);
+        drawHealthBars();
+        
+        currentFrame++;
+        requestAnimationFrame(() => setTimeout(animate, frameInterval));
+    }
+
+    // Проверяем, загружены ли кадры
+    if (frames.length === 0) {
+        console.error('No death animation frames loaded!');
+        if (callback) callback();
+        return;
+    }
+
+    animate();
+}
+
+// Обновляем функцию проверки столкновений
 function checkCollision() {
     if (stone) {
         // Проверяем, находится ли камень внутри общей области арикады
@@ -571,14 +780,15 @@ function checkCollision() {
         // Проверка столкновения с игроками
         let targetPlayer = currentPlayer === 1 ? player2 : player1;
         
-        // Проверяем расстояние от центра камня до игрока
-        let stoneRadius = 10; // Радиус камня
+        let stoneRadius = 10;
         
-        // Находим ближайшую точку прямоугольника игрока к центру камня
+        // Используем hitboxHeight вместо height для проверки столкновений
+        let hitboxY = targetPlayer.y + (targetPlayer.height - targetPlayer.hitboxHeight) / 2; // Центрируем хитбокс по вертикали
+        
+        // Находим ближайшую точку прямоугольника хитбокса к центру камня
         let closestX = Math.max(targetPlayer.x, Math.min(stone.x, targetPlayer.x + targetPlayer.width));
-        let closestY = Math.max(targetPlayer.y, Math.min(stone.y, targetPlayer.y + targetPlayer.height));
+        let closestY = Math.max(hitboxY, Math.min(stone.y, hitboxY + targetPlayer.hitboxHeight));
         
-        // Вычисляем расстояние между центром камня и ближайшей точкой прямоуголника игрока
         let distance = Math.sqrt((stone.x - closestX) ** 2 + (stone.y - closestY) ** 2);
         
         if (distance <= stoneRadius) {
@@ -586,21 +796,38 @@ function checkCollision() {
             if (targetPlayer.hp < 0) targetPlayer.hp = 0;
             stone = null;
 
-            // Устанавливаем флаг мигания для пораженного игрока
-            if (targetPlayer === player2) {
-                player2Hit = true; // Игрок 2 получил урон
+            if (targetPlayer.hp > 0) {
+                if (targetPlayer === player2) {
+                    player2Hit = true;
+                } else {
+                    player1Hit = true;
+                }
+                hitAnimationStartTime = Date.now();
+            }
+
+            if (targetPlayer.hp === 0 && !winnerDetermined) {
+                gameOver = true;
+                winnerDetermined = true; // Устанавливаем флаг
+                const winner = currentPlayer === 1 ? 'Puppet' : 'Gizmo';
+                const dyingPlayerNumber = currentPlayer === 1 ? 2 : 1;
+                
+                player1Hit = false;
+                player2Hit = false;
+                ctx.globalAlpha = 1.0;
+                
+                // Останавливаем об��овление игры
+                cancelAnimationFrame(updateGame);
+                
+                // Сначала проигрываем анимацию смерти
+                playDeathAnimation(dyingPlayerNumber, () => {
+                    // После завершения анимации смерти ждем 2 секунды
+                    setTimeout(() => {
+                        displayWinner(winner);
+                    }, 0);
+                });
             } else {
-                player1Hit = true; // Игрок 1 получил урон
+                switchPlayer();
             }
-            hitAnimationStartTime = Date.now();
-
-            // Проврка на оттствие HP
-            if (targetPlayer.hp === 0) {
-                const winner = targetPlayer === player2 ? 'Puppet' : 'Gizmo';
-                gameOver = true; // Устанавливаем флаг завершения игры
-            }
-
-            switchPlayer(); // Меняем игрока после обработки попадания
         }
     }
 }
@@ -608,54 +835,54 @@ function checkCollision() {
 let isBackButtonVisible = false; // Флаг видимости кнопки "Назад"
 
 function displayWinner(winner) {
+    // Останавливаем обновление игры
+    gameOver = true;
+    
     const backgroundColor = winner === 'Puppet' ? "#E82C40" : "#89DF6F";
-    let alpha = 0; // Начальная прозрачность
-    let fontSize = 10; // Начальный размер шрифта
-    const duration = 2000; // Длительность анимации в миллисекундах
+    let alpha = 0;
+    let fontSize = 10;
+    const duration = 2000;
     const startTime = Date.now();
 
-    function easeInOutQuad(t) {
-        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    }
-
-    function animate() {
+    function animateWinScreen() {
         const currentTime = Date.now();
         const elapsedTime = currentTime - startTime;
-        const progress = Math.min(elapsedTime / duration, 1); // Прогресс от 0 до 1
-
+        const progress = Math.min(elapsedTime / duration, 1);
         const easedProgress = easeInOutQuad(progress);
 
-        // Обновляем прозрачность и размер шрифта с учетом easing
         alpha = easedProgress;
-        fontSize = 10 + (38 * easedProgress); // От 10 до 48 пикселей
+        fontSize = 10 + (38 * easedProgress);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
+        // Очищаем холст и рисуем фон с текущей прозрачностью
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Рисуем цветной фон победителя
         ctx.fillStyle = `rgba(${parseInt(backgroundColor.slice(1, 3), 16)}, ${parseInt(backgroundColor.slice(3, 5), 16)}, ${parseInt(backgroundColor.slice(5, 7), 16)}, ${alpha})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height); // Заполняем фон
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Рисуем текст поверх
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`; // Цвет текста
-        ctx.font = `${fontSize}px Fortnite`; // Шрифт и размер текста
-        ctx.textAlign = "center"; // Выравнивание текста
-        ctx.textBaseline = "middle"; // Базовая линия текста
-        ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2); // Текст
+        // Рисуем текст победителя
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.font = `${fontSize}px Fortnite`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(`Game Over! ${winner} wins!`, canvas.width / 2, canvas.height / 2);
 
-        // Рисуем кнопку только если она должна быть видна
+        // Рисуем кнопку "Назад" если нужно
         if (isBackButtonVisible) {
-            ctx.globalAlpha = alpha; // Устанавливаем прозрачность для кнопки
+            ctx.globalAlpha = alpha;
             ctx.drawImage(backButtonImage, backButton.x, backButton.y, backButton.width, backButton.height);
-            ctx.globalAlpha = 1.0; // Восстанавливаем прозрачность
+            ctx.globalAlpha = 1.0;
         }
 
+        // Продолжаем анимацию, пока она не завершится
         if (progress < 1) {
-            requestAnimationFrame(animate); // Продолжаем анимацию
+            requestAnimationFrame(animateWinScreen);
         }
     }
 
-    setTimeout(() => {
-        isBackButtonVisible = true; // Устанавливаем флаг видимости кнопки
-        requestAnimationFrame(animate); // Запускаем анимацию с задержкой
-    }, 0); // Задержка перед началом анимации
+    // Запускаем анимацию экрана победителя
+    isBackButtonVisible = true;
+    animateWinScreen();
 }
 
 // Вспомогательная функция для роверки попадания точки в треугольник
@@ -676,28 +903,11 @@ function resetGame() {
     stone = null;
     throwPower = 0;
     gameOver = false; // Сбрасываем флаг завершения игры
+    winnerDetermined = false; // Сбрасываем флаг
     updateGame(); // Немедленно перезапускаем игру
 }
 
 let countdown = 3; // Начальное значение отсчета
-
-function showCountdown() {
-    ctx.fillStyle = "rgba(232, 44, 64, 1)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height); // Заливаем фон красным
-
-    ctx.fillStyle = "white";
-    ctx.font = "100px Fortnite"; // Устанавливаем шрифт и размер
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(countdown, canvas.width / 2, canvas.height / 2); // Рисуем цифру
-
-    if (countdown > 1) {
-        countdown--;
-        setTimeout(showCountdown, 1000); // Уменьшаем отсчет каждую секунду
-    } else {
-        setTimeout(updateGame, 1000); // Начинаем игру через секунду после "1"
-    }
-}
 
 // Ждем загрузки всех изображений перед началом игры
 Promise.all([
@@ -706,9 +916,10 @@ Promise.all([
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
-    cacheStaticElements(backgroundCtx); // Кэшируем стические элементы
+    preloadDeathFrames(); // Добавляем предзагрузку кадров смерти
+    cacheStaticElements(backgroundCtx); // Кэшируем статические элементы
     updateWind();
-    showCountdown();
+    showCountdown(); // Убедитесь, что эта функция вызывается после загрузки всех изображений
 });
 
 // Обработчик нажатия на кнопку
@@ -722,7 +933,7 @@ canvas.addEventListener('click', (e) => {
             mouseY >= backButton.y && mouseY <= backButton.y + backButton.height) {
             // Действие при нажатии на кнопку
             resetGame();
-            isBackButtonVisible = false; // Сбрасываем флаг видимости после нажатия
+            isBackButtonVisible = false; // Сбрасываем флаг видимости псле нажатия
         }
     }
 });
@@ -773,7 +984,7 @@ canvas.addEventListener('touchstart', (e) => {
     // Если касание произошло в пределах зелья, не начинаем зарядк
     if (potionTouched) return;
 
-    // Проверяем, что касание происходит в пределах игрового поля
+    // Проверяем, что касание проиходит в пределах игрового поля
     if (isTouchWithinGameArea(touchX, touchY)) {
         e.preventDefault();
         if (currentPlayer !== 1) return;
@@ -806,7 +1017,7 @@ function isTouchWithinGameArea(x, y) {
 }
 
 canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Предотвращаем действия по умолчанию
+    e.preventDefault(); // Предотвращаем дейтвия по умолчнию
 });
 
 // Загружаем шрит с помощью FontFace API
@@ -822,28 +1033,14 @@ fortniteFont.load().then(function(loadedFont) {
     console.error('Ошибка загрузки шрифта:', error);
 });
 
-// Перменные ля анимации пульсации
-let versusScale = 1;
-let scaleDirection = 1;
-const scaleSpeed = 0.0005; // Скорость изменения масштаба
-const maxScale = 1.05; // Максимальный масштаб
-const minScale = 0.95; // Минимальный масштаб
-
-// Обновляем функцию отрисовки изображения "versus" с анимацией
-function drawVersus(ctx) { // Принимаем контекст в качесв параметра
-    const versusWidth = 75 * versusScale; // Ширина изображения с учетом масштаба
-    const versusHeight = 63 * versusScale; // Высота изображения с учетом масштаба
+// Функция для отрисовки изображения "versus" без анимации
+function drawVersus(ctx) {
+    const versusWidth = 75; // Фиксированная ширина
+    const versusHeight = 63; // Фиксированная высота
     const centerX = canvas.width / 2;
     const centerY = versusHeight / 2 - 35;
     
-    // Изменяем координаты отрисовки, чтобы пульсация происходила от цента
     ctx.drawImage(versusImage, centerX - versusWidth / 2, centerY - versusHeight / 2 + 65, versusWidth, versusHeight);
-
-    // Обновляем масштаб для анимации пульсации
-    versusScale += scaleSpeed * scaleDirection;
-    if (versusScale > maxScale || versusScale < minScale) {
-        scaleDirection *= -1; // Меняем направление изменения масштаба
-    }
 }
 
 // Функция для отрисовки аватаров
@@ -864,14 +1061,14 @@ potionImage.src = 'potion.png';
 // Позиции и размеры зелья для обоих игроков
 const potions = [
     {
-        x: 15, // Позиция по X для первого игрока
+        x: 65, // Позиция по X для первого игрока
         y: 35, // Позиция по Y
         width: 50, // Ширина зелья
         height: 70, // Высота зелья
         used: false // Флаг использования
     },
     {
-        x: canvas.width - 65, // Позиция по X для второго игрока
+        x: canvas.width - 115, // Позиция по X для второго игрока
         y: 35, // Позиция по Y
         width: 50, // Ширина зелья
         height: 70, // Флаг использования
@@ -888,7 +1085,7 @@ function drawPotions() {
                 ctx.save();
                 // Перемещаем контекст к позиции зелья
                 ctx.translate(potion.x + potion.width / 2, potion.y + potion.height / 2);
-                // Отражаем по горизонтали
+                // Оражаем по горизонтали
                 ctx.scale(-1, 1);
                 // Отрисовываем изображение, смещая его обратно
                 ctx.drawImage(potionImage, -potion.width / 2, -potion.height / 2, potion.width, potion.height);
@@ -934,3 +1131,11 @@ function usePotion(index) {
         }
     }
 }
+
+// Функция для плавной анимации
+function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+let interfaceAlpha = 1.0; // Добавляем переменную для прозрачности интерфейса
+

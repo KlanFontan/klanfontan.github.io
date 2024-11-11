@@ -24,22 +24,25 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 80vh;
+    height: 100vh;
   }
   
   canvas {
-    border: 1px solid #000;
     background-color: #e5e5e5;
-    width: 850px;
-    height: 350px;
+    width: 100%;
+    height: auto;
+    max-width: 850px;
+    max-height: 350px;
   }
   
   #gameCanvas {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: auto;
     font-family: 'Fortnite';
     display: block;
     touch-action: none;
+    max-width: 850px;
+    max-height: 350px;
   }
 
   @font-face {
