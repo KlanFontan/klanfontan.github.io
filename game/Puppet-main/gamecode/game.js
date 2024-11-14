@@ -12,8 +12,8 @@ tele.setHeaderColor("#000000");
 tele.setBackgroundColor("#000000");
 
 // Размеры холста
-canvas.width = 850*1.5;
-canvas.height = 300*1.5;
+canvas.width = 1280*1;
+canvas.height = 522*1;
 
 // Персонажи
 const player1 = { 
@@ -187,7 +187,7 @@ function drawWindBar() {
     ctx.shadowOffsetY = 4; // Смещение тени по Y
     ctx.shadowBlur = 0; // Размытие тени
 
-    // Фон бара
+    // Фо�� бара
     ctx.fillStyle = "#B3B4FE";
     ctx.fillRect(barX, barY, barWidth, barHeight);
 
@@ -254,7 +254,14 @@ function drawBackground() {
     ctx.drawImage(backgroundCanvas, 0, 0);
 }
 
-// Функция рисования игрока
+// Добавляем переменные для отслеживания состояния звёзд
+let player1StarsOpacity = 0;
+let player2StarsOpacity = 0;
+const starsAnimationDuration = 1000; // 1 секунда
+let player1StarsAnimationStart = 0;
+let player2StarsAnimationStart = 0;
+
+// Обновляем функцию рисования игрока
 function drawPlayer(player) {
     // Проверяем, нужно ли мигание и не закончилась ли игра
     let isHit = !gameOver && ((player === player1 && player1Hit) || (player === player2 && player2Hit));
@@ -277,6 +284,46 @@ function drawPlayer(player) {
         ctx.drawImage(player2Image, player.x, player.y, player.width, player.height);
     }
 
+    // Обновляем кадр анимации звёзд
+    const currentTime = performance.now();
+    if (currentTime - lastStarsFrameTime > 50) {
+        currentStarsFrame = (currentStarsFrame + 1) % loadedStarsFrames.length;
+        lastStarsFrameTime = currentTime;
+    }
+
+    // Обновляем прозрачность звёзд
+    if (player === player1) {
+        if (player1StarsAnimationStart > 0) {
+            const elapsed = currentTime - player1StarsAnimationStart;
+            if (elapsed < starsAnimationDuration) {
+                player1StarsOpacity = 1 - (elapsed / starsAnimationDuration);
+            } else {
+                player1StarsOpacity = 0;
+                player1StarsAnimationStart = 0;
+            }
+        }
+        ctx.globalAlpha = player1StarsOpacity;
+    } else {
+        if (player2StarsAnimationStart > 0) {
+            const elapsed = currentTime - player2StarsAnimationStart;
+            if (elapsed < starsAnimationDuration) {
+                player2StarsOpacity = 1 - (elapsed / starsAnimationDuration);
+            } else {
+                player2StarsOpacity = 0;
+                player2StarsAnimationStart = 0;
+            }
+        }
+        ctx.globalAlpha = player2StarsOpacity;
+    }
+
+    // Отрисовываем звёзды над персонажем
+    const starsWidth = 125; // Немного уже, чем персонаж
+    const starsHeight = 125; // Примерная высота звёзд
+    const starsX = player.x + (player.width - starsWidth) / 2;
+    const starsY = player.y - starsHeight / 4 + 60;
+
+    ctx.drawImage(loadedStarsFrames[currentStarsFrame], starsX, starsY, starsWidth, starsHeight);
+    
     // Восстанавливаем прозрачность
     ctx.globalAlpha = 1.0;
 }
@@ -793,17 +840,22 @@ function checkCollision() {
         
         if (distance <= stoneRadius) {
             targetPlayer.hp -= 15;
-            if (targetPlayer.hp < 0) targetPlayer.hp = 0;
+            if (targetPlayer.hp <= 0) {
+                targetPlayer.hp = 0;
+                targetPlayer.height = targetPlayer.height / 1.5;
+                targetPlayer.y = canvas.height - targetPlayer.height - 34;
+            }
             stone = null;
 
-            if (targetPlayer.hp > 0) {
-                if (targetPlayer === player2) {
-                    player2Hit = true;
-                } else {
-                    player1Hit = true;
-                }
-                hitAnimationStartTime = Date.now();
+            // Активируем анимацию звёзд при попадании
+            if (targetPlayer === player2) {
+                player2Hit = true;
+                player2StarsAnimationStart = performance.now();
+            } else {
+                player1Hit = true;
+                player1StarsAnimationStart = performance.now();
             }
+            hitAnimationStartTime = Date.now();
 
             if (targetPlayer.hp === 0 && !winnerDetermined) {
                 gameOver = true;
@@ -815,7 +867,7 @@ function checkCollision() {
                 player2Hit = false;
                 ctx.globalAlpha = 1.0;
                 
-                // Останавливаем об��овление игры
+                // Останавливаем обовление игры
                 cancelAnimationFrame(updateGame);
                 
                 // Сначала проигрываем анимацию смерти
@@ -909,17 +961,47 @@ function resetGame() {
 
 let countdown = 3; // Начальное значение отсчета
 
-// Ждем загрузки всех изображений перед началом игры
+// Добавляем массивы для кадров анимации звёзд
+const gizmoStarsFrames = [
+    '/assets/gizmo_stars/frame_00.png',
+    '/assets/gizmo_stars/frame_01.png',
+    '/assets/gizmo_stars/frame_02.png',
+    '/assets/gizmo_stars/frame_03.png',
+    '/assets/gizmo_stars/frame_04.png',
+    '/assets/gizmo_stars/frame_05.png',
+    '/assets/gizmo_stars/frame_06.png',
+    '/assets/gizmo_stars/frame_07.png',
+    '/assets/gizmo_stars/frame_08.png',
+    '/assets/gizmo_stars/frame_09.png',
+    '/assets/gizmo_stars/frame_10.png'
+];
+
+// Массив для хранения загруженных изображений
+const loadedStarsFrames = [];
+let currentStarsFrame = 0;
+let lastStarsFrameTime = 0;
+
+// Добавляем функцию предзагрузки кадров звёзд
+function preloadStarsFrames() {
+    gizmoStarsFrames.forEach(src => {
+        const img = new Image();
+        img.src = src;
+        loadedStarsFrames.push(img);
+    });
+}
+
+// Обновляем Promise.all при загрузке игры
 Promise.all([
     new Promise(resolve => backgroundImage.onload = resolve),
     new Promise(resolve => emptyHpBarImage.onload = resolve),
     new Promise(resolve => player1Image.onload = resolve),
     new Promise(resolve => player2Image.onload = resolve)
 ]).then(() => {
-    preloadDeathFrames(); // Добавляем предзагрузку кадров смерти
-    cacheStaticElements(backgroundCtx); // Кэшируем статические элементы
+    preloadDeathFrames();
+    preloadStarsFrames(); // Добавляем предзагрузку кадров звёзд
+    cacheStaticElements(backgroundCtx);
     updateWind();
-    showCountdown(); // Убедитесь, что эта функция вызывается после загрузки всех изображений
+    showCountdown();
 });
 
 // Обработчик нажатия на кнопку
